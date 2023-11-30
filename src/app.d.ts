@@ -6,7 +6,18 @@ declare global {
 		// interface Locals {}
 		// interface PageData {}
 		// interface Platform {}
+
+		export interface printers {
+			flash?: {
+				cardHovered: boolean;
+				name: string;
+				image: string;
+				apiKey: string;
+				selected: boolean;
+			}
+		}
+
 	}
 }
 
-export {};
+export { };

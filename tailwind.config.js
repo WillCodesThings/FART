@@ -1,9 +1,14 @@
 /** @type {import('tailwindcss').Config} */
-export default {
-  content: [],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
 
+import defaultTheme from 'tailwindcss/defaultTheme';
+export default {
+  content: ['./src/**/*.{html,js,svelte,ts}'],
+  theme: {
+    extend: {
+      fontFamily: {
+        inter: ['Inter', ...defaultTheme.fontFamily.sans],
+      },
+    },
+  },
+  plugins: [require('tailwind-scrollbar')],
+}
