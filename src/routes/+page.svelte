@@ -81,7 +81,8 @@
                         }}
                         on:click={() => {
                             selectPrinter(printer.apiKey);
-                            window.location.href = "/printer";
+                            window.location.href =
+                                "/printer/" + printer.printerID;
                         }}
                     >
                         <div

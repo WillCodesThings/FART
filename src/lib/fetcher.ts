@@ -1,9 +1,8 @@
 const fetcher = async (query: any, headers: any, url: string, fetch) => {
     try {
-        const res = await fetch(url + `/api/${query}/`, {method: "GET", headers : headers});
-        const data = await res.json();
+        const res = await fetch(url + `/api/${query}/`, { method: "GET", headers: headers });
         return data;
-    } catch (error){
+    } catch (error) {
         console.log(error);
         return error;
     }
