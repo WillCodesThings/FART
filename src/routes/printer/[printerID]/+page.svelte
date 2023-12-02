@@ -1,30 +1,26 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { get } from "svelte/store";
-    import { printers } from ".././printers";
+    import { printers } from "../../printers.js";
 
-    var currentPrinter:
-        | {
-              cardHovered: boolean;
-              name: string;
-              image: string;
-              apiKey: string;
-              selected: boolean;
-          }
-        | undefined;
+
+    export let data;
+
+    $: ({ res, printerID } = data);
+
     //recieve printer data from the store
     var printerS = get(printers);
 
-    currentPrinter = printerS.find(
-        (printer: { selected: boolean }) => printer.selected === true
-    );
+    // currentPrinter = printerS.find(
+    //     (printer: { selected: boolean }) => printer.selected === true
+    // );
 
     let percentage = 0;
 
     onMount(() => {
-        console.log(printerS.forEach((printer) => printer.selected === true));
+        // console.log(printerS.forEach((printer) => printer.selected === true));
         console.log("Page mounted");
-        console.log(currentPrinter);
+        console.log(data);
         setInterval(() => {
             percentage++;
         }, 200);
