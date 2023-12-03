@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
     import { get } from "svelte/store";
-    import { selectPrinter, printers } from "./printers.ts";
+    import { printers } from "./printers.ts";
 
     const printersS = get(printers);
     // generated random letters then reveals the end name
@@ -38,14 +38,6 @@
 
     onMount(() => {
         console.log("Hello from the page component!");
-        localStorage.setItem("printers", JSON.stringify(get(printers)));
-        setInterval(() => {
-            get(printers).forEach((printer) => {
-                if (printer.selected) {
-                    console.log("Selected printer:", printer);
-                }
-            });
-        }, 200);
     });
 </script>
 
@@ -80,7 +72,6 @@
                             printer.cardHovered = false;
                         }}
                         on:click={() => {
-                            selectPrinter(printer.apiKey);
                             window.location.href =
                                 "/printer/" + printer.printerID;
                         }}

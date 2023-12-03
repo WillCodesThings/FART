@@ -13,9 +13,9 @@ export const printers = writable([
         cardHovered: false,
         name: "George",
         image: "https://media.tenor.com/-DU5l9gh3iwAAAAC/george-pig-peppa-pig.gif",
-        apiKey: "12343",
+        apiKey: 'eVc9qg9Pd8L5Biy',
         printerID: 2,
-        ipAddr: "http://192.168.50.200"
+        ipAddr: "http://192.168.50.235"
     },
     {
         cardHovered: false,
@@ -50,12 +50,3 @@ export const printers = writable([
         ipAddr: "http://192.168.50.200"
     },
 ]);
-
-export function selectPrinter(apiKey: string) {
-    printers.update((printers) => {
-        printers.forEach((printer) => {
-            printer.selected = printer.apiKey === apiKey;
-        });
-        return printers;
-    });
-}

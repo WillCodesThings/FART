@@ -1,10 +1,14 @@
+import { json } from "@sveltejs/kit";
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ fetch, params: { printerID } }) {
 
   try {
-    const res = await fetch(`/api/${printerID}`);
+    let res = await fetch(`/api/${printerID}`);
+
+    res = res.json();
+
     return {
-      res, printerID
+      res
     };
   } catch (error) {
     console.log(error);
