@@ -4,7 +4,7 @@ import { printers } from "../.././printers";
 export const GET = async ({ params: { printerID }, fetch }) => {
     try {
         let printersS;
-        
+
         // Subscribe to the printers store
         const unsubscribe = printers.subscribe(value => {
             printersS = value;
@@ -14,7 +14,7 @@ export const GET = async ({ params: { printerID }, fetch }) => {
 
         try {
             printersS.forEach((p) => {
-                if (p.printerID === parseInt(printerID)){
+                if (p.printerID === parseInt(printerID)) {
                     printer = p;
                 }
             });
@@ -49,3 +49,38 @@ export const GET = async ({ params: { printerID }, fetch }) => {
         return json({ error: error.message });
     }
 };
+
+
+/** @type {import('./$types').RequestHandler} */
+export async function POST({ request }) {
+    const a = await request.json();
+    const method = a.query.method;
+    const printerID = a.printerID;
+    const url = a.url;
+    const body = a.query.body;
+    return json("got it");
+}
+
+function getPrinter(printerID) {
+    let printer = {};
+    printers.forEach((p) => {
+        if (p.printerID === parseInt(printerID)) {
+            printer = p;
+        }
+    });
+    return printer;
+}
+
+function addPrint(printer, file: File) {
+    const apiKey = printer.apiKey;
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = fetch(printer.ipAddr + `/api/files/${file.name}`, { method: 'POST', body: formData, headers: { 'X-Api-Key': apiKey } });
+}
+
+async function selectNstartPrint(fileName: string, printer) {
+
+    const res = await fetch(printer.ipAddr + `/api/files/`, { method: 'POST', headers: { 'X-Api-Key': printer.apiKey } })
+    let files = res.json();
+
+}
