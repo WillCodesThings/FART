@@ -8,6 +8,8 @@
 
     let hovered: boolean = false;
 
+    let uploading: boolean = false;
+
     let printer: {
         cardHovered: boolean;
         name: string;
@@ -25,6 +27,37 @@
     };
 
     let percentage = 5;
+
+    function openUploadDialouge() {
+        if (uploading) {
+            return;
+        }
+        let fileObject = document.getElementById("fileUpload");
+        fileObject.click();
+    }
+
+    /*
+
+        Using XMLHttpRequest to send a file to a printer via /api/[printerID]
+
+        This is how the file will be sent to the printer, as a binary file (which what FormData is).
+
+    */
+    function sendFile(file) {
+        const uri = `/api/${printer.printerID}`;
+        const xhr = new XMLHttpRequest();
+        const fd = new FormData();
+
+        xhr.open("POST", uri, true);
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                alert(xhr.responseText); // handle response.
+            }
+        };
+        fd.append("myFile", file);
+        // Initiate a multipart/form-data upload
+        xhr.send(fd);
+    }
 
     onMount(() => {
         // document.getElementById("page").addEventListener("mousemove", (e) => {
@@ -59,7 +92,11 @@
             body: JSON.stringify({
                 printer: printer,
                 url: "/job",
-                query: { method: "POST", command: "pause" },
+                query: {
+                    method: "POST",
+                    command: "pause",
+                    body: document.getElementById("fileUpload").files[0],
+                },
             }),
         });
 
@@ -116,14 +153,29 @@
                 class="w-full h-full overflow-hidden flex flex-col items-center relative left-1 py-2"
             >
                 <!-- svelte-ignore a11y-no-static-element-interactions -->
+                <input
+                    type="file"
+                    id="fileUpload"
+                    class="hidden"
+                    on:change={(e) => {
+                        console.log(e.target.files[0]);
+                        sendFile(e.target.files[0]);
+                        uploading = true;
+                    }}
+                />
                 <div
                     class="w-4/5 h-2/4 bg-[#252525] rounded-t-xl rounded-b-lg flex flex-col items-center justify-center"
                     on:mouseenter={() => (hovered = true)}
                     on:mouseleave={() => (hovered = false)}
+                    on:click={() => {
+                        openUploadDialouge();
+                    }}
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-10 w-10 uploadIcon mb-2 border-2 p-2 rounded-full border-[#FFF5EF] transition-all duration-300 ease-in-out select-none {hovered
+                        class="h-10 w-10 uploadIcon mb-2 border-2 p-2 rounded-full border-[#FFF5EF] transition-all duration-300 ease-in-out select-none {uploading
+                            ? 'hidden'
+                            : 'visible'} {hovered
                             ? 'rotate-12 -translate-y-3'
                             : ''}"
                         fill="currentColor"
@@ -145,11 +197,33 @@
                     </form> -->
 
                     <div
-                        class="text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none {hovered
-                            ? '-rotate-2 -translate-y-3'
-                            : ''}"
+                        class="text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none {uploading
+                            ? 'hidden'
+                            : 'visible'} "
                     >
                         UPLOAD
+                    </div>
+
+                    <div
+                        class="{uploading
+                            ? 'visible'
+                            : 'hidden'} flex flex-col items-center justify-center text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none"
+                        id="spinning circle"
+                    >
+                        <svg
+                            class="animate-spin h-10 w-10 text-[#FFF5EF] mb-2 p-2 border-2 rounded-full border-[#FFF5EF] transition-all duration-300 ease-in-out select-none {uploading
+                                ? 'visible'
+                                : 'hidden'} "
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="currentColor"
+                            height="24"
+                            width="24"
+                            viewBox="0 0 512 512"
+                            ><path
+                                d="M222.7 32.1c5 16.9-4.6 34.8-21.5 39.8C121.8 95.6 64 169.1 64 256c0 106 86 192 192 192s192-86 192-192c0-86.9-57.8-160.4-137.1-184.1c-16.9-5-26.6-22.9-21.5-39.8s22.9-26.6 39.8-21.5C434.9 42.1 512 140 512 256c0 141.4-114.6 256-256 256S0 397.4 0 256C0 140 77.1 42.1 182.9 10.6c16.9-5 34.8 4.6 39.8 21.5z"
+                            /></svg
+                        >
+                        UPLOADING
                     </div>
                 </div>
                 <!-- svelte-ignore a11y-click-events-have-key-events -->

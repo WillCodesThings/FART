@@ -58,6 +58,7 @@ export async function POST({ request }) {
     const printerID = a.printerID;
     const url = a.url;
     const body = a.query.body;
+    console.log(body);
     return json("got it");
 }
 
@@ -83,4 +84,8 @@ async function selectNstartPrint(fileName: string, printer) {
     const res = await fetch(printer.ipAddr + `/api/files/`, { method: 'POST', headers: { 'X-Api-Key': printer.apiKey } })
     let files = res.json();
 
+}
+
+function controlPrint(printer, action: string, authorizationCode: string) {
+    fetch(printer.ipAddr + `/api/job`, { method: 'POST', headers: { 'X-Api-Key': printer.apiKey }, body: JSON.stringify({ command: action === "Start" ? "Start" : authorizationCode === "2324" ? "Stop" : "Pause" }) });
 }
