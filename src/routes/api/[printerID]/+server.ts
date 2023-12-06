@@ -52,19 +52,44 @@ export const GET = async ({ params: { printerID }, fetch }) => {
 
 
 /** @type {import('./$types').RequestHandler} */
-export async function POST({ request }) {
-    const a = await request.json();
-    const method = a.query.method;
-    const printerID = a.printerID;
-    const url = a.url;
-    const body = a.query.body;
-    console.log(body);
-    return json("got it");
+export async function POST({ params: { printerID }, request }) {
+    try {
+        const formData = await request.formData();
+        let fileName: String;
+        // Now formDataObject contains all the fields from the form data
+
+        for (const [name, file1] of formData.entries()) {
+            // Process each file as needed
+            fileName = name;
+        }
+
+        await addPrint(getPrinter(printerID), formData, fileName);
+
+        return json("got it");
+    } catch (error) {
+        console.error('Error processing the request:', error);
+
+        const a = await request.json();
+        const method = a.query.method;
+        const printerID = a.printerID;
+        const url = a.url;
+        const body = a.query.body;
+        console.log(body);
+
+        return json("got it");
+    }
 }
 
+
 function getPrinter(printerID) {
+
+    let printersS;
+    const unsubscribe = printers.subscribe(value => {
+        printersS = value;
+    });
+
     let printer = {};
-    printers.forEach((p) => {
+    printersS.forEach((p) => {
         if (p.printerID === parseInt(printerID)) {
             printer = p;
         }
@@ -72,11 +97,14 @@ function getPrinter(printerID) {
     return printer;
 }
 
-function addPrint(printer, file: File) {
+async function addPrint(printer, formData: FormData, fileName: String) {
     const apiKey = printer.apiKey;
-    const formData = new FormData();
-    formData.append('file', file);
-    const res = fetch(printer.ipAddr + `/api/files/${file.name}`, { method: 'POST', body: formData, headers: { 'X-Api-Key': apiKey } });
+
+    const res = await fetch(printer.ipAddr + `/api/files/${fileName}`, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Api-Key': apiKey },
+    });
 }
 
 async function selectNstartPrint(fileName: string, printer) {

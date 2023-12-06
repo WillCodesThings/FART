@@ -5,6 +5,7 @@
 
     import { onMount } from "svelte";
     import img from "$lib/images/dave.jpg";
+    import { get } from "svelte/store";
 
     let hovered: boolean = false;
 
@@ -38,25 +39,28 @@
 
     /*
 
-        Using XMLHttpRequest to send a file to a printer via /api/[printerID]
+        Using Fetch to send a file to a printer via /api/[printerID]
 
         This is how the file will be sent to the printer, as a binary file (which what FormData is).
 
     */
     function sendFile(file) {
-        const uri = `/api/${printer.printerID}`;
-        const xhr = new XMLHttpRequest();
         const fd = new FormData();
+        fd.append(file.name, file);
+        fetch("/api/2", {
+            method: "POST",
+            body: fd,
+        });
+    }
 
-        xhr.open("POST", uri, true);
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                alert(xhr.responseText); // handle response.
-            }
-        };
-        fd.append("myFile", file);
-        // Initiate a multipart/form-data upload
-        xhr.send(fd);
+    function getPrinterStatus(printer) {
+        fetch("/api/2", {
+            method: "GET",
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                return data;
+            });
     }
 
     onMount(() => {
@@ -84,21 +88,7 @@
         //     });
         // });
 
-        fetch("/api/2", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                printer: printer,
-                url: "/job",
-                query: {
-                    method: "POST",
-                    command: "pause",
-                    body: document.getElementById("fileUpload").files[0],
-                },
-            }),
-        });
+        printRunning = getPrinterStatus(printer).status === "";
 
         setInterval(() => {
             percentage += 1;
@@ -108,6 +98,10 @@
             console.log(document.getElementById("button"));
         }, 1000);
     });
+
+    function playPause() {
+        throw new Error("Function not implemented.");
+    }
 </script>
 
 <!-- Add Tailwind CSS classes to the appropriate elements -->
@@ -149,6 +143,8 @@
                     DAVE
                 </div>
             </div>
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div
                 class="w-full h-full overflow-hidden flex flex-col items-center relative left-1 py-2"
             >
@@ -163,6 +159,7 @@
                         uploading = true;
                     }}
                 />
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <div
                     class="w-4/5 h-2/4 bg-[#252525] rounded-t-xl rounded-b-lg flex flex-col items-center justify-center"
                     on:mouseenter={() => (hovered = true)}
@@ -229,29 +226,46 @@
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <!-- svelte-ignore a11y-no-static-element-interactions -->
                 <div
-                    class=" w-2/3 h-1/3 mt-6 mr-32 place-self-auto bg-[#252525] flex flex-col justify-center items-center rounded-t-lg rounded-b-xl p-2"
+                    class=" w-2/3 h-1/3 mt-6 mr-32 place-self-auto bg-[#252525] rounded-t-lg rounded-b-xl p-2"
                     id="printerControls"
                 >
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div
-                        class="transition-all duration-300 ease-in-out select-none cursor-pointer bg-[#006442] rounded-lg w-auto p-2"
+                        class="transition-all duration-300 ease-in-out select-none cursor-pointer text-lg text-[#FFF5EF] font-bold w-1/3 relative top-0 left-0 bg-[#006442] rounded-lg max-w-md p-2"
                         id="playPause"
                         on:click={() => {
                             console.log("play/pause");
-                            fetch;
+                            playPause();
                         }}
                     >
-                        <svg
-                            class="playIcon"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="currentColor"
-                            height="32"
-                            width="32"
-                            viewBox="0 0 384 512"
-                            ><path
-                                d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"
-                            /></svg
-                        >
+                        <div class="flex flex-row items-stretch" id="play">
+                            <svg
+                                class="playIcon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="currentColor"
+                                height="32"
+                                width="32"
+                                viewBox="0 0 384 512"
+                                ><path
+                                    d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"
+                                /></svg
+                            >
+                            <div class="px-4">Start Print</div>
+                        </div>
+                        <div class="flex flex-row items-stretch" id="pause">
+                            <svg
+                                class="playIcon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="currentColor"
+                                height="32"
+                                width="32"
+                                viewBox="0 0 384 512"
+                                ><path
+                                    d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"
+                                /></svg
+                            >
+                            <div class="px-4">Pause Print</div>
+                        </div>
                     </div>
                 </div>
             </div>
