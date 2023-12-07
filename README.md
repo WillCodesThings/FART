@@ -1,3 +1,7 @@
+
+# Made for the idea center as a way to upload and control Prusa mk4's from a computer
+## automates all the stuff without having to upload directly to usb
+
 # create-svelte
 
 Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
@@ -16,7 +20,7 @@ npm create svelte@latest my-app
 
 ## Developing
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` <- (Use this) or `yarn`), start a development server:
 
 ```bash
 npm run dev
