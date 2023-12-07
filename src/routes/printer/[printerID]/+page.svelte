@@ -7,9 +7,15 @@
     import img from "$lib/images/dave.jpg";
     import { get } from "svelte/store";
 
+
+    export let data;
+    $: ({ res } = data);
+
     let hovered: boolean = false;
 
     let uploading: boolean = false;
+
+    let printerOperation:String;
 
     let printer: {
         cardHovered: boolean;
@@ -18,13 +24,6 @@
         apiKey: String;
         printerID: number;
         ipAddr: String;
-    } = {
-        cardHovered: false,
-        name: "Dave",
-        image: img,
-        apiKey: "1234",
-        printerID: 1,
-        ipAddr: "192.168.7.30",
     };
 
     let percentage = 5;
@@ -45,12 +44,22 @@
 
     */
     function sendFile(file) {
+        // if (file.name.split(".")[1] !== "gcode") {
+        //     return alert("File must be a .gcode file");
+        // }
+        uploading = true;
         const fd = new FormData();
         fd.append(file.name, file);
         fetch("/api/2", {
             method: "POST",
             body: fd,
         });
+
+        if (uploading) {
+            setTimeout(() => {
+                uploading = false;
+            }, 5000);
+        }
     }
 
     function getPrinterStatus(printer) {
@@ -64,11 +73,35 @@
     }
 
     onMount(() => {
+        // console.log(printerS.forEach((printer) => printer.selected === true));
+        printerOperation = res.data;
+        console.log(res.data);
+        console.log(res.data.state);
+        printer = res.printer;
+        console.log(res.printer);
+        console.log("Page mounted");
+        setInterval(async () => {
+            try {
+                let res = await fetch(`/api/${printer.printerID}`);
+                let data = await res.json();
+                // console.log(data);
+                console.log(data.data);
+                printer = data.printer;
+                
+            } catch (error) {
+                console.error('Error fetching or parsing JSON:', error);
+            }
+        }, 10000);
+
+        
+
         // document.getElementById("page").addEventListener("mousemove", (e) => {
         //     const interactable = e.target.closest("#button"),
         //         interacting = interactable !== null;
 
-        //     interactable
+        //     document.getElementById("mouse")?.addEventListener("click", () => {
+        //         interactable.click();
+        //     });
 
         //     const mouse = document.getElementById("mouse");
         //     const x = e.pageX - mouse.offsetWidth / 2,
@@ -83,24 +116,28 @@
         //     };
 
         //     mouse.animate(keyframes, {
-        //         duration: 500,
+        //         duration: 700,
         //         fill: "forwards",
         //     });
         // });
-
-        printRunning = getPrinterStatus(printer).status === "";
-
-        setInterval(() => {
-            percentage += 1;
-            if (percentage > 100) {
-                percentage = 0;
-            }
-            console.log(document.getElementById("button"));
-        }, 1000);
     });
 
     function playPause() {
-        throw new Error("Function not implemented.");
+        if (printerOperation === "pause") {
+            printerOperation = "resume";
+        } else {
+            printerOperation = "pause";
+        }
+        const res = fetch(`/api/${printer.printerID}`, {
+            method: "POST",
+            body: JSON.stringify({
+                query:{
+                printer: printer,
+                command: printerOperation,
+            }
+            }),
+        });
+        console.log(res);
     }
 </script>
 
@@ -122,7 +159,7 @@
                 >
                     <img
                         class="rounded-t-lg rounded-b-md object-cover object-center z-10 absolute top-0 left-0 selection-none"
-                        src={printer.image}
+                        src={img}
                         alt="its a printer, chill out."
                     />
                     <div
@@ -156,7 +193,6 @@
                     on:change={(e) => {
                         console.log(e.target.files[0]);
                         sendFile(e.target.files[0]);
-                        uploading = true;
                     }}
                 />
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -167,6 +203,7 @@
                     on:click={() => {
                         openUploadDialouge();
                     }}
+                    id="button"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -252,7 +289,7 @@
                             >
                             <div class="px-4">Start Print</div>
                         </div>
-                        <div class="flex flex-row items-stretch" id="pause">
+                        <div class="flex flex-row items-stretch hidden" id="pause">
                             <svg
                                 class="playIcon"
                                 xmlns="http://www.w3.org/2000/svg"

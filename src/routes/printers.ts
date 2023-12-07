@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-
+import img from "../lib/images/dave.png";
 export const printers = writable([
     {
         cardHovered: false,
@@ -12,7 +12,7 @@ export const printers = writable([
     {
         cardHovered: false,
         name: "George",
-        image: "https://media.tenor.com/-DU5l9gh3iwAAAAC/george-pig-peppa-pig.gif",
+        image: "../../../lib/images/dave.png",
         apiKey: 'eVc9qg9Pd8L5Biy',
         printerID: 2,
         ipAddr: "http://192.168.50.235"
