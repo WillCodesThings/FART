@@ -4,6 +4,9 @@
     import { get } from "svelte/store";
     import { printers } from "./printers.ts";
 
+    // I forgot this entire page existed.
+    // need to rewrite this page
+
     const printersS = get(printers);
     // generated random letters then reveals the end name
     function randomLettersEffect(e) {

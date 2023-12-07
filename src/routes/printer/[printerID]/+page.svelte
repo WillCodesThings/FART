@@ -1,12 +1,15 @@
 <!-- ... (Your imports) -->
 
 <script lang="ts">
-    // ... (Your existing code)
+    /*
+
+        For giga brain people only.
+        Made by Will
+
+    */
 
     import { onMount } from "svelte";
     import img from "$lib/images/dave.jpg";
-    import { get } from "svelte/store";
-
 
     export let data;
     $: ({ res } = data);
@@ -15,7 +18,7 @@
 
     let uploading: boolean = false;
 
-    let printerOperation:String;
+    let printerOperation: String;
 
     let printer: {
         cardHovered: boolean;
@@ -44,56 +47,62 @@
 
     */
     function sendFile(file) {
-        // if (file.name.split(".")[1] !== "gcode") {
-        //     return alert("File must be a .gcode file");
-        // }
+        if (file.name.includes(".gcode") === false) {
+            return alert("File must be a .gcode file");
+        }
         uploading = true;
         const fd = new FormData();
         fd.append(file.name, file);
-        fetch("/api/2", {
+        const res = fetch("/api/2", {
             method: "POST",
             body: fd,
         });
 
-        if (uploading) {
-            setTimeout(() => {
-                uploading = false;
-            }, 5000);
+        if (res.status === 200 || res.status === 201) {
+            uploading = false;
+            console.log("File uploaded");
+        } else {
+            uploading = false;
+            console.log("File upload failed");
         }
     }
 
-    function getPrinterStatus(printer) {
-        fetch("/api/2", {
-            method: "GET",
-        })
-            .then((response) => response.json())
-            .then((data) => {
-                return data;
-            });
-    }
-
     onMount(() => {
-        // console.log(printerS.forEach((printer) => printer.selected === true));
+        // Should be the current state of the printer
+        // structured similarly to this :
+        // {"Printing", jobs: [{jobName: "test.gcode", progress: 0.5}]}
+
         printerOperation = res.data;
+        printer = res.printer;
+
+        /*
+        Debugging code, uncomment to see stuff
+
+        console.log(res.printer);
         console.log(res.data);
         console.log(res.data.state);
-        printer = res.printer;
-        console.log(res.printer);
         console.log("Page mounted");
+        */
         setInterval(async () => {
             try {
                 let res = await fetch(`/api/${printer.printerID}`);
                 let data = await res.json();
-                // console.log(data);
-                console.log(data.data);
+
+                // more debug
+                // console.log(data.data);
+
                 printer = data.printer;
-                
             } catch (error) {
-                console.error('Error fetching or parsing JSON:', error);
+                console.error("Error fetching or parsing JSON:", error);
             }
         }, 10000);
 
-        
+        /*
+
+            This is the code for the mouse cursor that follows the user around the page.
+            It's a bit buggy, so I've commented it out for now.
+
+        */
 
         // document.getElementById("page").addEventListener("mousemove", (e) => {
         //     const interactable = e.target.closest("#button"),
@@ -122,6 +131,16 @@
         // });
     });
 
+    /*
+
+        This is to pause/play the printer
+        Sent as a post request to /api/[printerID]
+        can be found in the alternate folder in routes.
+
+        Sent to +server.ts
+
+    */
+
     function playPause() {
         if (printerOperation === "pause") {
             printerOperation = "resume";
@@ -131,10 +150,10 @@
         const res = fetch(`/api/${printer.printerID}`, {
             method: "POST",
             body: JSON.stringify({
-                query:{
-                printer: printer,
-                command: printerOperation,
-            }
+                query: {
+                    printer: printer,
+                    command: printerOperation,
+                },
             }),
         });
         console.log(res);
@@ -191,7 +210,8 @@
                     id="fileUpload"
                     class="hidden"
                     on:change={(e) => {
-                        console.log(e.target.files[0]);
+                        // debug code.
+                        // console.log(e.target.files[0]);
                         sendFile(e.target.files[0]);
                     }}
                 />
@@ -220,16 +240,6 @@
                             d="M214.6 41.4c-12.5-12.5-32.8-12.5-45.3 0l-160 160c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 141.2V448c0 17.7 14.3 32 32 32s32-14.3 32-32V141.2L329.4 246.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-160-160z"
                         /></svg
                     >
-
-                    <!-- <form
-                        id="button"
-                        enctype="multipart/form-data"
-                        action="/upload/"
-                        method="post"
-                    >
-                        <input id="image-file" type="file" />
-                    </form> -->
-
                     <div
                         class="text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none {uploading
                             ? 'hidden'
@@ -271,7 +281,8 @@
                         class="transition-all duration-300 ease-in-out select-none cursor-pointer text-lg text-[#FFF5EF] font-bold w-1/3 relative top-0 left-0 bg-[#006442] rounded-lg max-w-md p-2"
                         id="playPause"
                         on:click={() => {
-                            console.log("play/pause");
+                            // guess what this is.
+                            // console.log("play/pause");
                             playPause();
                         }}
                     >
@@ -289,7 +300,10 @@
                             >
                             <div class="px-4">Start Print</div>
                         </div>
-                        <div class="flex flex-row items-stretch hidden" id="pause">
+                        <div
+                            class="flex flex-row items-stretch hidden"
+                            id="pause"
+                        >
                             <svg
                                 class="playIcon"
                                 xmlns="http://www.w3.org/2000/svg"
@@ -311,7 +325,9 @@
 </section>
 
 <style>
-    /* Add Tailwind CSS styles for gradient and blur */
+    /* Add styles for gradient and blur */
+    /* not native to tailwind, so I've added it here. */
+    /* for the lines over the printer image */
     .gradient {
         background: repeating-linear-gradient(
             20deg,
@@ -321,10 +337,10 @@
             #141414 10px
         );
 
-        opacity: 0.98; /* Adjust the opacity as needed */
+        opacity: 0.98; /* magic number dont touch */
     }
 
-    /* Your existing styles */
+    /* to color the icons  */
     .uploadIcon {
         color: #fff5ef;
     }

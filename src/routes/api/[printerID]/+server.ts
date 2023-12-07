@@ -1,48 +1,37 @@
 import { json } from "@sveltejs/kit";
 import { printers } from "../.././printers";
 
+
+// Defines the get method for the server
 export const GET = async ({ params: { printerID }, fetch }) => {
     try {
-        let printersS;
+        let printer = getPrinter(printerID);
 
-        // Subscribe to the printers store
-        const unsubscribe = printers.subscribe(value => {
-            printersS = value;
-        });
+        // debug code dont need
+        // console.log(printer);
 
-        let printer = {};
-
-        try {
-            printersS.forEach((p) => {
-                if (p.printerID === parseInt(printerID)) {
-                    printer = p;
-                }
-            });
-        } catch (error) {
-            console.log("cry about it");
-        }
-
-        console.log(printer);
-
+        // checks to make sure im not stupid
         if (!printer) {
             throw new Error(`Printer with ID ${printerID} not found`);
         }
 
+        // actual printer ip, can't ddos me tho haha
         const res = await fetch('http://192.168.50.235/api/job', {
             headers: {
                 'X-Api-Key': printer.apiKey
             }
         });
 
+        // check if the printer is not dead
         if (!res.ok) {
             throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
         }
 
+        // converting from nerd to human
+        // remember this not explaining again
         const data = await res.json();
 
-        // Unsubscribe from the store to avoid memory leaks
-        unsubscribe();
-
+        // dont forget to be able to actually use it
         return json({ data, printer });
     } catch (error) {
         console.error(error);
@@ -51,53 +40,69 @@ export const GET = async ({ params: { printerID }, fetch }) => {
 };
 
 
+// Defines the post method for the server
+// yes there are more than one method for https
+// crazy
+
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ params: { printerID }, request, fetch }) {
     try {
         const formData = await request.formData();
-        console.log(formData)
+
+        // making sure I get file
+        // still debug tho
+        // console.log(formData)
+
         let fileName: String;
         let lengthOfFile: Number;
-        // Now formDataObject contains all the fields from the form data
 
+        // can get everything else with filename so
+        // I neglect the rest
         for (const [name, file1] of formData.entries()) {
-            // Process each file as needed
             fileName = name;
             break;
         }
 
+        // proof of my other comment
         const file = formData.get(fileName);
 
+        // no idea what to do with this
         lengthOfFile = file.size;
 
-        console.log(lengthOfFile);
+        // debug
+        // console.log(lengthOfFile);
 
+        // not debug
         const res = await addPrint(getPrinter(printerID), formData, fileName, lengthOfFile, fetch);
 
-        console.log("awehfiga");
-        console.log(res);
+        // debug
+        // console.log("awehfiga");
+        // console.log(res);
 
-        return json("got it");
+        return json("got it"); // amazing response
     } catch (error) {
         const a = await request.json();
         const method = a.query.method;
         const Cprinter = a.query.printer;
         const commnad = a.query.command;
-        console.log("");
-        console.log("");
-        console.log("");
-        console.log(commnad);
-        console.log("");
-        console.log("");
-        console.log("");
 
-        controlPrint(Cprinter, commnad.toLowerCase(), "2324", fetch);
+        // debug but dumb
+        // console.log("");
+        // console.log("");
+        // console.log("");
+        // console.log(commnad);
+        // console.log("");
+        // console.log("");
+        // console.log("");
 
-        return json("got it");
+        controlPrint(Cprinter, commnad.toLowerCase(), "2324", fetch); // very secure authorization code ik
+
+        return json("got it"); // amazing response
     }
 }
 
-
+// gets printer based on printerID
+// uses the store in printers.ts
 function getPrinter(printerID) {
 
     let printersS;
@@ -116,6 +121,7 @@ function getPrinter(printerID) {
 
 
 /*
+    API for prusa mk4
 
     put:
       summary: upload file or create folder
@@ -148,20 +154,25 @@ function getPrinter(printerID) {
             default: "?0"
 
 */
+
+// gives me nightmares
+// time spent debugging: 2 hours
+// time spent writing: 1 hour
+
+// uses the fetch api to send the file to the printer
 async function addPrint(printer, formData: FormData, fileName: string, lengthOfFile: number, fetch) {
     try {
         const res = await fetch(printer.ipAddr + `/api/files/sdcard`, {
             method: 'POST',
             body: formData,
-            headers: {'X-Api-Key': printer.apiKey, 'Print-After-Upload': true, 'Content-Type': 'multipart/form-data'},
+            headers: { 'X-Api-Key': printer.apiKey, 'Print-After-Upload': true, 'Content-Type': 'multipart/form-data' },
         });
 
-        // Check if the response status is ok before reading the JSON
+        // Check if the response status is ok
         if (!res.ok) {
             throw new Error(`HTTP error! Status: ${res.status}`);
         }
 
-        // Read the response JSON
         const responseBody = await res.json();
 
         // Log or process the responseBody as needed
@@ -169,23 +180,64 @@ async function addPrint(printer, formData: FormData, fileName: string, lengthOfF
 
         return responseBody;
     } catch (error) {
-        // Handle any errors that occur during the fetch or JSON parsing
+        // if I get any of these errors I am horrible at coding
         console.error('Error processing the response:', error);
-        throw error; // Rethrow the error for the calling code to handle if needed
+        throw error;
     }
 }
 
-
+// no idea what this does
+// dont really need it but I think i can use it
 async function selectNstartPrint(fileName: string, printer, fetch) {
 
     const res = await fetch(printer.ipAddr + `/api/files/`, { method: 'POST', headers: { 'X-Api-Key': printer.apiKey } })
     let files = res.json();
 
 }
+
+// this allows me to pause and resume the printer
+
+/*
+    API for prusa mk4
+
+        post:
+      summary: Issue a job command.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+                  enum: ["start", "restart", "pause", "cancel"]
+                  default: start
+                action:
+                  type: string
+                  enum: [pause, resume]
+                  default: resume
+      responses:
+        204:
+          description: No Content
+                       No Error
+        403:
+          $ref: "#/components/responses/Unauthorized"
+        409:
+          $ref: "#/components/responses/Conflict"
+          description: If not is project, file not found or printer is printing.
+        501:
+          $ref: "#/components/responses/NotImplemented"
+          description: Unsupported command.
+*/
+
+// no errors so far
 async function controlPrint(printer, Caction, authorizationCode, fetch) {
     const endpoint = `${printer.ipAddr}/api/job`;
     const apiKeyHeader = { 'X-Api-Key': printer.apiKey };
     let requestBody = {};
+
+    // horrid if statement but it works
+    // so no changes
     if (Caction === 'resume') {
 
         console.log("resume");
@@ -193,20 +245,22 @@ async function controlPrint(printer, Caction, authorizationCode, fetch) {
             command: 'pause',
             action: 'resume',
         };
-    
+
 
     } else {
         requestBody = {
             command: 'pause',
             action: 'pause',
         };
-    
+
     }
 
 
 
-    
+    // crazy I need a try block
+    // should just work probably
     try {
+        // Send the request
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
@@ -216,6 +270,7 @@ async function controlPrint(printer, Caction, authorizationCode, fetch) {
             body: JSON.stringify(requestBody),
         });
 
+        // responses
         if (response.status === 204) {
             // Successful request, no content
             console.log('Command executed successfully.');
@@ -229,6 +284,9 @@ async function controlPrint(printer, Caction, authorizationCode, fetch) {
             console.error(`Unexpected response: ${response.status} ${response.statusText}`);
         }
     } catch (error) {
+        // Network or other request error
+        // its the printers fault
+        // i swear
         console.error('Error executing command:', error.message);
     }
 }
