@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { printers } from "../.././printers";
+import { printers } from "../../printer.ts";
 
 
 // Defines the get method for the server
@@ -8,7 +8,7 @@ export const GET = async ({ params: { printerID }, fetch }) => {
         let printer = getPrinter(printerID);
 
         // debug code dont need
-        // console.log(printer);
+        console.log(printer);
 
         // checks to make sure im not stupid
         if (!printer) {
@@ -16,7 +16,11 @@ export const GET = async ({ params: { printerID }, fetch }) => {
         }
 
         // actual printer ip, can't ddos me tho haha
-        const res = await fetch('http://192.168.50.235/api/job', {
+
+        console.log(`http://${printer.ipAddr}/api/job`);
+        console.log({'X-Api-Key': printer.apiKey});
+
+        const res = await fetch(`http://${printer.ipAddr}/api/job`, {
             headers: {
                 'X-Api-Key': printer.apiKey
             }
@@ -162,15 +166,31 @@ function getPrinter(printerID) {
 // uses the fetch api to send the file to the printer
 async function addPrint(printer, formData: FormData, fileName: string, lengthOfFile: number, fetch) {
     try {
-        const res = await fetch(printer.ipAddr + `/api/files/sdcard`, {
+        const data = await formDataToOctetStream(formData);
+        console.log(data);
+        console.log(printer.ipAddr + `/api/files/sdcard`);
+        const res = await fetch(`https://${printer.ipAddr}/api/files/usb`, {
             method: 'POST',
             body: formData,
             headers: { 'X-Api-Key': printer.apiKey, 'Print-After-Upload': true, 'Content-Type': 'multipart/form-data' },
         });
 
         // Check if the response status is ok
+        console.log(res.status);
         if (!res.ok) {
             throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+
+        if (res.status === 409) {
+            console.error('Conflict: File already exists.');
+        } else if (res.status === 413) {
+            console.error('Payload Too Large: File is too large.');
+        } else if (res.status === 415) {
+            console.error('Unsupported Media Type: File is not supported.');
+        } else if (res.status === 500) {
+            console.error('Internal Server Error: File could not be uploaded.');
+        } else if (res.status === 201) {
+            console.log('File uploaded successfully.');
         }
 
         const responseBody = await res.json();
@@ -236,23 +256,27 @@ async function controlPrint(printer, Caction, authorizationCode, fetch) {
     const apiKeyHeader = { 'X-Api-Key': printer.apiKey };
     let requestBody = {};
 
-    // horrid if statement but it works
-    // so no changes
-    if (Caction === 'resume') {
+    // if (Caction === 'resume') {
 
-        console.log("resume");
-        requestBody = {
-            command: 'pause',
-            action: 'resume',
-        };
+    //     console.log("resume");
+    //     requestBody = {
+    //         command: 'pause',
+    //         action: 'resume',
+    //     };
 
 
-    } else {
-        requestBody = {
-            command: 'pause',
-            action: 'pause',
-        };
+    // } else {
+    //     requestBody = {
+    //         command: 'pause',
+    //         action: 'pause',
+    //     };
 
+    // }
+
+    // fixed if statement, above is for readability
+    requestBody = {
+        command: authorizationCode === "2324" ? 'cancel' : 'pause',
+        action: Caction,
     }
 
 
@@ -291,3 +315,13 @@ async function controlPrint(printer, Caction, authorizationCode, fetch) {
     }
 }
 
+async function formDataToOctetStream(formData: FormData) {
+    // Convert FormData to Blob
+    const blob = new Blob([...formData], { type: 'application/octet-stream' });
+
+    // Convert Blob to ArrayBuffer
+    const arrayBuffer = await blob.arrayBuffer();
+
+    // Now you can use the arrayBuffer as the body in your request
+    return arrayBuffer;
+}

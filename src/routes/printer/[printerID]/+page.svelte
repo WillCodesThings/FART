@@ -1,5 +1,3 @@
-<!-- ... (Your imports) -->
-
 <script lang="ts">
     /*
 
@@ -75,14 +73,14 @@
         printerOperation = res.data;
         printer = res.printer;
 
-        /*
-        Debugging code, uncomment to see stuff
+        // /*
+        // Debugging code, uncomment to see stuff
 
         console.log(res.printer);
         console.log(res.data);
         console.log(res.data.state);
         console.log("Page mounted");
-        */
+        // */
         setInterval(async () => {
             try {
                 let res = await fetch(`/api/${printer.printerID}`);
