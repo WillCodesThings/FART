@@ -18,7 +18,7 @@ export const GET = async ({ params: { printerID }, fetch }) => {
         // actual printer ip, can't ddos me tho haha
 
         console.log(`http://${printer.ipAddr}/api/job`);
-        console.log({'X-Api-Key': printer.apiKey});
+        console.log({ 'X-Api-Key': printer.apiKey });
 
         const res = await fetch(`http://${printer.ipAddr}/api/job`, {
             headers: {
@@ -168,11 +168,10 @@ async function addPrint(printer, formData: FormData, fileName: string, lengthOfF
     try {
         const data = await formDataToOctetStream(formData);
         console.log(data);
-        console.log(printer.ipAddr + `/api/files/sdcard`);
-        const res = await fetch(`https://${printer.ipAddr}/api/files/usb`, {
+        console.log(`http://${printer.ipAddr}/api/files/sdcard`);
+        const res = await fetch(`http://${printer.ipAddr}/api/files/usb`, {
             method: 'POST',
-            body: formData,
-            headers: { 'X-Api-Key': printer.apiKey, 'Print-After-Upload': true, 'Content-Type': 'multipart/form-data' },
+            headers: { 'X-Api-Key': printer.apiKey, 'Print-After-Upload': true, 'Content-Type': 'multipart/form-data', file: formData, selected: true, 'Content-Length': lengthOfFile },
         });
 
         // Check if the response status is ok
