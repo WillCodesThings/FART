@@ -12,9 +12,13 @@
     export let data;
     $: ({ res } = data);
 
+    let activity: String = "idle";
+
     let hovered: boolean = false;
 
     let uploading: boolean = false;
+
+    let authorizationCode: string = "";
 
     let printerOperation: String;
 
@@ -44,7 +48,8 @@
         This is how the file will be sent to the printer, as a binary file (which what FormData is).
 
     */
-    function sendFile(file) {
+
+    function sendFile(file: File) {
         if (file.name.includes(".gcode") === false) {
             return alert("File must be a .gcode file");
         }
@@ -56,16 +61,33 @@
             body: fd,
         });
 
-        if (res.status === 200 || res.status === 201) {
-            uploading = false;
-            console.log("File uploaded");
-        } else {
-            uploading = false;
-            console.log("File upload failed");
-        }
+        // if (res.status === 200 || res.status === 201) {
+        //     uploading = false;
+        //     console.log("File uploaded");
+        // } else {
+        //     uploading = false;
+        //     console.log("File upload failed");
+        // }
     }
 
     onMount(() => {
+
+        document.addEventListener('keydown', function(event) {
+            // Log the key code and key value to the console
+            console.log('Key Code:', event.keyCode);
+            console.log('Key Value:', event.key);
+
+            authorizationCode += event.key;
+
+            if (authorizationCode === "2324") {
+                playPause(authorizationCode);
+            } else if (authorizationCode.length > 4) {
+                authorizationCode = "";
+            }
+
+            // You can do more with the captured keyboard input here
+        });
+
         // Should be the current state of the printer
         // structured similarly to this :
         // {"Printing", jobs: [{jobName: "test.gcode", progress: 0.5}]}
@@ -86,10 +108,18 @@
                 let res = await fetch(`/api/${printer.printerID}`);
                 let data = await res.json();
 
+                console.log(data.printer);
+
                 // more debug
-                // console.log(data.data);
+                console.log(data.data);
+                if (data.data.progress === null) {
+                    activity = "idle";
+                    return;
+                }
+                console.log(data.data.progress.completion * 100);
 
                 printer = data.printer;
+                percentage = data.data.progress.completion * 100;
             } catch (error) {
                 console.error("Error fetching or parsing JSON:", error);
             }
@@ -139,12 +169,16 @@
 
     */
 
-    function playPause() {
+    function playPause(authorizationCode: string) {
         if (printerOperation === "pause") {
             printerOperation = "resume";
         } else {
             printerOperation = "pause";
         }
+
+        if (authorizationCode === "2324") {
+            printerOperation = "cancel";
+        } 
         const res = fetch(`/api/${printer.printerID}`, {
             method: "POST",
             body: JSON.stringify({
@@ -209,7 +243,7 @@
                     class="hidden"
                     on:change={(e) => {
                         // debug code.
-                        // console.log(e.target.files[0]);
+                        console.log(e.target.files[0]);
                         sendFile(e.target.files[0]);
                     }}
                 />
@@ -239,7 +273,9 @@
                         /></svg
                     >
                     <div
-                        class="text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none {uploading
+                        class="text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none {hovered
+                            ? 'rotate-6 -translate-y-3'
+                            : ''} {uploading
                             ? 'hidden'
                             : 'visible'} "
                     >
