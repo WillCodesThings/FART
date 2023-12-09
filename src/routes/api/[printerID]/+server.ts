@@ -169,7 +169,7 @@ async function addPrint(printer, formData: FormData, fileName: string, fetch) {
         const res = await fetch(`http://${printer.ipAddr}/api/v1/files/usb//${fileName}`, {
             method: 'PUT',
             body: formData,
-            headers: { 'X-Api-Key': printer.apiKey, 'Print-After-Upload': true, 'Content-Type': 'text/x.gcode'},
+            headers: { 'X-Api-Key': printer.apiKey, 'Print-After-Upload': true, 'Content-Type': 'text/x.gcode', 'Overwrite': '?1' },
         });
 
         // Check if the response status is ok

@@ -26,7 +26,7 @@ class Printer {
         this.fetch = fetch;
         this.printerInfo = this.getPrinterStatus();
         this.selectedFile = "";
-        this.printThumbnail = this.image;
+        this.printThumbnail = "";
     }
 
     // 3. Getter/Setter Methods
@@ -54,6 +54,10 @@ class Printer {
         return this.cardHovered;
     }
 
+    public async getPrintThumbnail(): Promise<string> {
+        return this.printThumbnail;
+    }
+
     public toggleCardHovered(): void {
         this.cardHovered = !this.cardHovered;
     }
@@ -79,22 +83,44 @@ class Printer {
 
     public async addFile(file: FormData) {
 
-        const res = await this.fetch(`http://${this.ipAddr}/api/files/local`, {
-            method: 'POST',
-            body: JSON.stringify({ file: file, path: "/usb", select: true }),
-            headers: {
-                'X-Api-Key': this.apiKey,
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        let fileName: string = "";
 
-        if (!res.ok) {
-            throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
+        for (const [name, file1] of file.entries()) {
+            fileName = name;
+            break;
         }
 
-        const data = await res.json();
+        try {
+            console.log(`http://${this.ipAddr}/api/files/usb//${fileName}`);
+            const res = await fetch(`http://${this.ipAddr}/api/v1/files/usb//${fileName}`, {
+                method: 'PUT',
+                body: file,
+                headers: { 'X-Api-Key': this.apiKey, 'Print-After-Upload': true, 'Content-Type': 'text/x.gcode' },
+            });
 
-        return data;
+            // Check if the response status is ok
+            console.log(res.status);
+            if (!res.ok) {
+                throw new Error(`HTTP error! Status: ${res.status}`);
+            }
+
+            if (res.status === 409) {
+                console.error('Conflict: File already exists.');
+            } else if (res.status === 413) {
+                console.error('Payload Too Large: File is too large.');
+            } else if (res.status === 415) {
+                console.error('Unsupported Media Type: File is not supported.');
+            } else if (res.status === 507) {
+                console.error('Internal Server Error: No storage');
+            } else if (res.status === 201) {
+                console.log('File uploaded successfully.');
+            }
+
+        } catch (error) {
+            // if I get any of these errors I am horrible at coding
+            console.error('Error processing the response:', error);
+            throw error;
+        }
     }
 
     public async printFile(fileName: string) {
@@ -120,7 +146,7 @@ class Printer {
     }
 
     public async deleteFile(fileName: string) {
-        const res = await this.fetch(`http://${this.ipAddr}/api/files/local/${fileName}`, {
+        const res = await this.fetch(`http://${this.ipAddr}/api/v1/files/usb//${fileName}`, {
             method: 'DELETE',
             headers: {
                 'X-Api-Key': this.apiKey,
@@ -170,6 +196,8 @@ class Printer {
 
         return this.printThumbnail;
     }
+
+
 
     public equals(otherPrinter: Printer): boolean {
         return (this.printerID === otherPrinter.getPrinterID()) && (this.apiKey === otherPrinter.getApiKey());
