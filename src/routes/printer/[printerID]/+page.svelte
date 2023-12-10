@@ -7,16 +7,25 @@
     */
 
     import { onMount } from "svelte";
-    import img from "$lib/images/dave.jpg";
 
     export let data;
-    $: ({ res } = data);
+    $: ({ res  } = data);
+
+    console.log(res);
+
+    let status: String = "idle";
 
     let activity: String = "idle";
 
     let hovered: boolean = false;
 
     let uploading: boolean = false;
+
+    let img: string = "https://i.imgur.com/2ZJZQ4w.png";
+
+    let files = ["No files found"];
+
+    console.log(files);
 
     let authorizationCode: string = "";
 
@@ -29,6 +38,13 @@
         apiKey: String;
         printerID: number;
         ipAddr: String;
+    } = {
+        cardHovered: false,
+        name: "",
+        image: "",
+        apiKey: "",
+        printerID: 0,
+        ipAddr: "",
     };
 
     let percentage = 5;
@@ -50,18 +66,18 @@
     */
 
     function sendFile(file: File) {
-        if (file.name.includes(".gcode") === false) {
+        if ((file.name.includes(".gcode") || file.name.includes(".gco") || file.name.includes(".gcode")) === false) {
             return alert("File must be a .gcode file");
         }
         uploading = true;
         const fd = new FormData();
         fd.append(file.name, file);
-        const res = fetch("/api/2", {
+        const res = fetch(`/api/${printer.printerID}`, {
             method: "POST",
             body: fd,
         });
 
-        // if (res.status === 200 || res.status === 201) {
+        // if (res.printerOperation === 200 || res.printerOperation === 201) {
         //     uploading = false;
         //     console.log("File uploaded");
         // } else {
@@ -93,7 +109,11 @@
         // {"Printing", jobs: [{jobName: "test.gcode", progress: 0.5}]}
 
         printerOperation = res.data;
+        status = res.data.state;
         printer = res.printer;
+        files = res.files;
+
+        img = getPrintingImage();
 
         // /*
         // Debugging code, uncomment to see stuff
@@ -101,14 +121,19 @@
         console.log(res.printer);
         console.log(res.data);
         console.log(res.data.state);
+        console.log(res.files);
         console.log("Page mounted");
         // */
         setInterval(async () => {
             try {
                 let res = await fetch(`/api/${printer.printerID}`);
                 let data = await res.json();
-
+                files = data.files;
                 console.log(data.printer);
+
+                getPrintingImage();
+
+                img = getPrintingImage();
 
                 // more debug
                 console.log(data.data);
@@ -190,6 +215,34 @@
         });
         console.log(res);
     }
+
+
+    function runFile(fileName: string) {
+        fetch(`/api/${printer.printerID}`, {
+            method: "POST",
+            body: JSON.stringify({
+                query: {
+                    method: "post",
+                    printer: printer,
+                    command: "run",
+                    fileName: fileName,
+                },
+            }),
+        });
+    }
+
+
+    function getPrintingImage(): string {
+        // return "";
+
+        const res = fetch(`http://${printer.ipAddr}/thumb/l/${res.data.job.file.path.split("/")[2]}}}`, {headers: {
+            'X-Api-Key': printer.apiKey,
+        }});
+
+        console.log(res);
+
+        return "";
+    }
 </script>
 
 <!-- Add Tailwind CSS classes to the appropriate elements -->
@@ -200,7 +253,7 @@
     ></div> -->
     <div class="col-span-1 relative w-full h-[100vh] bg-[#141414]">
         <div
-            class="grid grid-cols-2 grid-rows-1 gap-3 p-5 w-full h-full place-items-stretch"
+            class="grid grid-cols-2 grid-rows-1 gap-3 p-5 w-full h-full place-items-stretch items-center"
         >
             <div
                 class="w-2/3 h-full overflow-hidden flex flex-col items-center left-3 relative py-2"
@@ -209,8 +262,8 @@
                     class="w-full h-full overflow-hidden py-2 mb-4 rounded-t-lg rounded-b-md relative"
                 >
                     <img
-                        class="rounded-t-lg rounded-b-md object-cover object-center z-10 absolute top-0 left-0 selection-none"
-                        src={img}
+                        class="rounded-t-lg w-full h-full rounded-b-md object-cover object-center z-10 absolute top-0 left-0 selection-none imageAspect"
+                        src={printer.image}
                         alt="its a printer, chill out."
                     />
                     <div
@@ -228,13 +281,13 @@
                 <div
                     class="text-[#FFF5EF] z-10 text-8xl font-mono w-full text-center border-2 border-[#2c2c2c] rounded-b-lg rounded-t-md select-none"
                 >
-                    DAVE
+                    {printer.name}
                 </div>
             </div>
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div
-                class="w-full h-full overflow-hidden flex flex-col items-center relative left-1 py-2"
+                class="w-full h-full overflow-hidden flex flex-col items-center justify-center relative left-1 py-2"
             >
                 <!-- svelte-ignore a11y-no-static-element-interactions -->
                 <input
@@ -249,17 +302,20 @@
                 />
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <div
-                    class="w-4/5 h-2/4 bg-[#252525] rounded-t-xl rounded-b-lg flex flex-col items-center justify-center"
+                    class="w-4/5 h-2/4 bg-[#252525] rounded-t-xl rounded-b-lg flex flex-col items-center justify-center transition-all duration-300 ease-in-out select-none"
                     on:mouseenter={() => (hovered = true)}
                     on:mouseleave={() => (hovered = false)}
                     on:click={() => {
-                        openUploadDialouge();
+                        if (status !== "Printing"){
+                            openUploadDialouge();
+                        }
+                        
                     }}
                     id="button"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-10 w-10 uploadIcon mb-2 border-2 p-2 rounded-full border-[#FFF5EF] transition-all duration-300 ease-in-out select-none {uploading
+                        class="h-10 w-10 uploadIcon mb-2 border-2 p-2 rounded-full border-[#FFF5EF] transition-all duration-300 ease-in-out select-none {status === 'Printing' ? 'hidden' : 'visible'} {uploading
                             ? 'hidden'
                             : 'visible'} {hovered
                             ? 'rotate-12 -translate-y-3'
@@ -273,7 +329,7 @@
                         /></svg
                     >
                     <div
-                        class="text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none {hovered
+                        class="text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none {status === 'Printing' ? 'hidden' : 'visible'} {hovered
                             ? 'rotate-6 -translate-y-3'
                             : ''} {uploading
                             ? 'hidden'
@@ -285,11 +341,11 @@
                     <div
                         class="{uploading
                             ? 'visible'
-                            : 'hidden'} flex flex-col items-center justify-center text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none"
+                            : 'hidden'} flex flex-col items-center justify-center text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none {status === 'Printing' ? 'hidden' : 'visible'}"
                         id="spinning circle"
                     >
                         <svg
-                            class="animate-spin h-10 w-10 text-[#FFF5EF] mb-2 p-2 border-2 rounded-full border-[#FFF5EF] transition-all duration-300 ease-in-out select-none {uploading
+                            class="animate-spin h-10 w-10 text-[#FFF5EF] mb-2 p-2 border-2 rounded-full border-[#FFF5EF] transition-all duration-300 ease-in-out select-none {status === 'Printing' ? 'hidden' : 'visible'} {uploading
                                 ? 'visible'
                                 : 'hidden'} "
                             xmlns="http://www.w3.org/2000/svg"
@@ -303,23 +359,25 @@
                         >
                         UPLOADING
                     </div>
+                    <img class="aspect-video w-full h-full {status === 'Printing' ? 'visible' : 'hidden' }" src="{img}" alt="">
                 </div>
+
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <!-- svelte-ignore a11y-no-static-element-interactions -->
                 <div
-                    class=" w-2/3 h-1/3 mt-6 mr-32 place-self-auto bg-[#252525] rounded-t-lg rounded-b-xl p-2"
+                    class=" w-4/5 h-3/6 bg-[#252525]  mt-2 mr-[5.9rem] place-self-end rounded-t-lg rounded-b-xl p-4 gap-2"
                     id="printerControls"
                 >
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <div
-                        class="transition-all duration-300 ease-in-out select-none cursor-pointer text-lg text-[#FFF5EF] font-bold w-1/3 relative top-0 left-0 bg-[#006442] rounded-lg max-w-md p-2"
+                    <div class="grid grid-rows-1 grid-cols-2">
+                        <div
+                        class="transition-all duration-300 ease-in-out select-none cursor-pointer text-lg text-[#FFF5EF] font-bold w-full h-12 relative bg-[#006442] rounded-lg  p-2"
                         id="playPause"
                         on:click={() => {
                             // guess what this is.
                             // console.log("play/pause");
-                            playPause();
+                            playPause("a");
                         }}
-                    >
+                        >
                         <div class="flex flex-row items-stretch" id="play">
                             <svg
                                 class="playIcon"
@@ -334,12 +392,20 @@
                             >
                             <div class="px-4">Start Print</div>
                         </div>
+                        </div>
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <div
-                            class="flex flex-row items-stretch hidden"
-                            id="pause"
+                            class="transition-all duration-300 ease-in-out select-none cursor-pointer text-lg text-[#FFF5EF] font-bold w-full relative h-12 bg-[#FF7847] rounded-lg max-w-md p-2"
+                            id="playPause"
+                            on:click={() => {
+                                // guess what this is.
+                                // console.log("play/pause");
+                                playPause("a");
+                            }}
                         >
+                        <div class="flex flex-row items-stretch" id="play">
                             <svg
-                                class="playIcon"
+                                class="pauseIcon"
                                 xmlns="http://www.w3.org/2000/svg"
                                 fill="currentColor"
                                 height="32"
@@ -353,6 +419,40 @@
                         </div>
                     </div>
                 </div>
+                <div class="border-2 border-[#FFF5EF] text-[#FFF5EF] h-12 w-full p-2 font-semibold mt-4 flex flex-row rounded-lg" id="dropdown"
+                    on:mouseleave={() => (document.getElementById("dropdown-items").classList.remove("visible"))}
+                    on:click={() => {
+                        document.getElementById("dropdown-items").classList.toggle("visible");
+                    document.getElementById("dropdown-items").classList.toggle("hidden")}}
+                >
+                    Select a file
+                    <div 
+                    class="ml-auto mr-4 mt-2" 
+                    ><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class= "uploadIcon"  height="16" width="12" viewBox="0 0 384 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.--><path d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg></div>
+                </div>
+                <div class="hidden border-2 border-[#FFF5EF] text-[#FFF5EF] text-lg font-semibold px-2 rounded-sm select-none" id="dropdown-items">
+                    <!-- {each printer.files as afile} -->
+
+                    {#each files as afile}
+                        <div class="w-full rounded-sm"
+                            on:click={() => {
+                                runFile("test.gcode");
+                            }}
+                            on:mouseenter={() => {
+                                document.getElementById(afile.name).classList.add("bg-[#948e8a]");
+                                document.getElementById(afile.name).classList.remove("opacity-75");
+                            }}
+                            on:mouseleave={() => {
+                                document.getElementById(afile.name).classList.remove("bg-[#948e8a]");
+                                document.getElementById(afile.name).classList.add("opacity-75");
+                            }}
+                            id={afile.name}
+                        >
+                            {afile.name}
+                        </div>
+                    {/each}
+                </div>
+                <canvas id="graphCanvas" class="z-20 w-full h-5/6"></canvas>
             </div>
         </div>
     </div>
@@ -381,5 +481,13 @@
 
     .playIcon {
         color: #8db255;
+    }
+
+    .pauseIcon {
+        color: #ffb157;
+    }
+
+    .imageAspect {
+        aspect-ratio: 9 / 16;
     }
 </style>

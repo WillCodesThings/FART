@@ -26,6 +26,18 @@ export const GET = async ({ params: { printerID }, fetch }) => {
             }
         });
 
+        let files = await fetch(`http://${printer.ipAddr}/api/files`, {
+            headers: {
+                'X-Api-Key': printer.apiKey
+            }
+        });
+
+        files = await files.json();
+
+        console.log(files.files[0].children);
+
+        files = files.files[0].children.length === 0 ? ["No files found"] : files.files[0].children;
+
         // check if the printer is not dead
         if (!res.ok) {
             throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
@@ -36,7 +48,7 @@ export const GET = async ({ params: { printerID }, fetch }) => {
         const data = await res.json();
 
         // dont forget to be able to actually use it
-        return json({ data, printer });
+        return json({ data, printer, files });
     } catch (error) {
         console.error(error);
         return json({ error: error.message });
@@ -73,6 +85,9 @@ export async function POST({ params: { printerID }, request, fetch }) {
         // console.log(lengthOfFile);
 
         // not debug
+
+        console.log(printerID);
+
         const res = await addPrint(getPrinter(printerID), formData, fileName, fetch);
 
         // debug
@@ -95,6 +110,12 @@ export async function POST({ params: { printerID }, request, fetch }) {
         // console.log("");
         // console.log("");
 
+        if (commnad.toLowerCase() === "run") {
+            const filename = a.query.filename;
+            selectPrint(Cprinter, filename, fetch);
+            return json("got it"); // amazing response
+        }
+        
         controlPrint(Cprinter, commnad.toLowerCase(), fetch); // very secure authorization code ik
 
         return json("got it"); // amazing response
@@ -104,6 +125,8 @@ export async function POST({ params: { printerID }, request, fetch }) {
 // gets printer based on printerID
 // uses the store in printers.ts
 function getPrinter(printerID: string) {
+
+    console.log(printerID);
 
     let printersS;
     const unsubscribe = printers.subscribe(value => {
@@ -116,6 +139,9 @@ function getPrinter(printerID: string) {
             printer = p;
         }
     });
+
+    console.log(printer);
+
     return printer;
 }
 
@@ -163,13 +189,13 @@ function getPrinter(printerID: string) {
 // http://192.168.50.234/api/v1/files/usb//3dbenchy_015mm_pla_mk3_2h.gcode
 
 // uses the fetch api to send the file to the printer
-async function addPrint(printer, formData: FormData, fileName: string, fetch) {
+async function addPrint(printer, formData: FormData, fileName: string, fetch, lastIncrement = 0) {
     try {
         console.log(`http://${printer.ipAddr}/api/files/usb//${fileName}`);
-        const res = await fetch(`http://${printer.ipAddr}/api/v1/files/usb//${fileName}`, {
+        const res = await fetch(`http://${printer.ipAddr}/api/v1/files/usb//${lastIncrement === 0 ? "" : lastIncrement}${fileName}`, {
             method: 'PUT',
             body: formData,
-            headers: { 'X-Api-Key': printer.apiKey, 'Print-After-Upload': true, 'Content-Type': 'text/x.gcode', 'Overwrite': '?1' },
+            headers: { 'X-Api-Key': printer.apiKey, 'Print-After-Upload': true, 'Content-Type': 'text/x.gcode' },
         });
 
         // Check if the response status is ok
@@ -180,6 +206,7 @@ async function addPrint(printer, formData: FormData, fileName: string, fetch) {
 
         if (res.status === 409) {
             console.error('Conflict: File already exists.');
+            await addPrint(printer, formData, fileName, fetch, lastIncrement + 1)
         } else if (res.status === 413) {
             console.error('Payload Too Large: File is too large.');
         } else if (res.status === 415) {
@@ -189,40 +216,6 @@ async function addPrint(printer, formData: FormData, fileName: string, fetch) {
         } else if (res.status === 201) {
             console.log('File uploaded successfully.');
         }
-
-        // const reader = res.body.getReader();
-        // const contentLength = +res.headers.get('Content-Length');
-
-        //     let receivedLength = 0;
-        //     let chunks = [];
-
-        //     while (true) {
-        //         const { done, value } = await reader.read();
-
-        //         if (done) {
-        //             break;
-        //         }
-
-        //         chunks.push(value);
-        //         receivedLength += value.length;
-
-        //         const percentComplete = (receivedLength / contentLength) * 100;
-        //         console.log(`Upload Progress: ${percentComplete.toFixed(2)}%`);
-        //     }
-
-        // const blob = new Blob(chunks);
-        // let responseBody = await blob.text();
-        // const parsedBody = JSON.parse(responseBody);
-
-        // console.log('File uploaded successfully.');
-        // console.log('Response Body:', parsedBody);
-
-        // responseBody = await res.json();
-
-        // Log or process the responseBody as needed
-        // console.log('Response Body:', responseBody);
-
-        // return responseBody;
     } catch (error) {
         // if I get any of these errors I am horrible at coding
         console.error('Error processing the response:', error);
@@ -339,17 +332,17 @@ async function controlPrint(printer, Caction: any, fetch) {
     }
 }
 
-async function formDataToOctetStream(formData: FormData) {
-    try {
-        const file = formData.get('file');
-        if (file instanceof Blob) {
-            const buffer = await fs.readFile(file.path);
-            const binaryString = buffer.toString('binary');
-            return binaryString;
-        } else {
-            throw new Error('No file found in FormData.');
-        }
-    } catch (error) {
-        throw new Error('Error reading the file: ' + error.message);
-    }
+async function selectPrint(printer, fileName: string, fetch) {
+    const res = await fetch(printer.ipAddr + `/api/files/local/${fileName}`, { method: 'POST',body:JSON.stringify({command: 'select'}), headers: { 'X-Api-Key': printer.apiKey } });
+    return res.status;  
+}
+
+async function getImg(printer, fetch) {
+    const res = await fetch(printer.ipAddr + `/api/job`, { method: 'GET', headers: { 'X-Api-Key': printer.apiKey } });
+
+    console.log(res.json());
+
+    const response = await fetch(`/thumb/l/usb/${res.json().job.file.path.split("/")[-1]}`, { method: 'GET', headers: { 'X-Api-Key': printer.apiKey } });
+
+    return response;  
 }

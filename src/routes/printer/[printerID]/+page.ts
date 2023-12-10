@@ -8,9 +8,17 @@ export async function load({ fetch, params: { printerID } }) {
     // Don't really need this file anymore so its just vanity
     // or a POC, whichever you prefer
 
-    let res = await fetch(`/api/${printerID}`);
+    let res = await fetch(`/api/${printerID}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    
+    });
 
     res = res.json();
+
+    console.log(res);
 
     return {
       res
