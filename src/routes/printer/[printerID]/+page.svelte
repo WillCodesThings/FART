@@ -9,11 +9,9 @@
     import { onMount } from "svelte";
 
     export let data;
-    $: ({ res  } = data);
+    $: ({ res } = data);
 
     console.log(res);
-
-    let status: String = "idle";
 
     let activity: String = "idle";
 
@@ -66,7 +64,11 @@
     */
 
     function sendFile(file: File) {
-        if ((file.name.includes(".gcode") || file.name.includes(".gco") || file.name.includes(".gcode")) === false) {
+        if (
+            (file.name.includes(".gcode") ||
+                file.name.includes(".gco") ||
+                file.name.includes(".gcode")) === false
+        ) {
             return alert("File must be a .gcode file");
         }
         uploading = true;
@@ -87,11 +89,10 @@
     }
 
     onMount(() => {
-
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener("keydown", function (event) {
             // Log the key code and key value to the console
-            console.log('Key Code:', event.keyCode);
-            console.log('Key Value:', event.key);
+            console.log("Key Code:", event.keyCode);
+            console.log("Key Value:", event.key);
 
             authorizationCode += event.key;
 
@@ -113,7 +114,7 @@
         printer = res.printer;
         files = res.files;
 
-        img = getPrintingImage();
+        img = `data:image/png;base64,${getPrintingImage()}`;
 
         // /*
         // Debugging code, uncomment to see stuff
@@ -131,9 +132,7 @@
                 files = data.files;
                 console.log(data.printer);
 
-                getPrintingImage();
-
-                img = getPrintingImage();
+                img = `data:image/png;base64,${getPrintingImage()}`;
 
                 // more debug
                 console.log(data.data);
@@ -203,7 +202,7 @@
 
         if (authorizationCode === "2324") {
             printerOperation = "cancel";
-        } 
+        }
         const res = fetch(`/api/${printer.printerID}`, {
             method: "POST",
             body: JSON.stringify({
@@ -215,7 +214,6 @@
         });
         console.log(res);
     }
-
 
     function runFile(fileName: string) {
         fetch(`/api/${printer.printerID}`, {
@@ -231,22 +229,40 @@
         });
     }
 
-
     function getPrintingImage(): string {
         // return "";
+        if (res.data.job === null) {
+            return "Not Printing Yet";
+        }
+        fetch(
+            `http://${printer.ipAddr}/thumb/l/${
+                res.data.job.file.path.split("/")[2]
+            }}}`,
+            {
+                headers: {
+                    "X-Api-Key": printer.apiKey.toString(),
+                },
+            },
+        )
+            .then((res) => res.blob())
+            .then((blob) => {
+                const reader: FileReader = new FileReader();
+                reader.readAsDataURL(blob);
+                // onloadend => onload
+                reader.onloadend = function () {
+                    const base64data = reader.result;
+                    console.log(base64data);
+                    return base64data;
+                };
+            });
 
-        const res = fetch(`http://${printer.ipAddr}/thumb/l/${res.data.job.file.path.split("/")[2]}}}`, {headers: {
-            'X-Api-Key': printer.apiKey,
-        }});
-
-        console.log(res);
-
-        return "";
+        return "Fetch Failed";
     }
 </script>
 
-<!-- Add Tailwind CSS classes to the appropriate elements -->
 <section id="page">
+    <!-- un-used mouse trailer -->
+
     <!-- <div
         class="fixed w-5 h-5 rounded-full z-50 bg-white cursor-none"
         id="mouse"
@@ -296,8 +312,10 @@
                     class="hidden"
                     on:change={(e) => {
                         // debug code.
-                        console.log(e.target.files[0]);
-                        sendFile(e.target.files[0]);
+                        if (!e.target) {
+                            return;
+                        }
+                        sendFile(e.target.files[0]); // send the file to the printer, ignore the "error"
                     }}
                 />
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -306,16 +324,18 @@
                     on:mouseenter={() => (hovered = true)}
                     on:mouseleave={() => (hovered = false)}
                     on:click={() => {
-                        if (status !== "Printing"){
+                        if (status !== "Printing") {
                             openUploadDialouge();
                         }
-                        
                     }}
                     id="button"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-10 w-10 uploadIcon mb-2 border-2 p-2 rounded-full border-[#FFF5EF] transition-all duration-300 ease-in-out select-none {status === 'Printing' ? 'hidden' : 'visible'} {uploading
+                        class="h-10 w-10 uploadIcon mb-2 border-2 p-2 rounded-full border-[#FFF5EF] transition-all duration-300 ease-in-out select-none {status ===
+                        'Printing'
+                            ? 'hidden'
+                            : 'visible'} {uploading
                             ? 'hidden'
                             : 'visible'} {hovered
                             ? 'rotate-12 -translate-y-3'
@@ -329,11 +349,12 @@
                         /></svg
                     >
                     <div
-                        class="text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none {status === 'Printing' ? 'hidden' : 'visible'} {hovered
-                            ? 'rotate-6 -translate-y-3'
-                            : ''} {uploading
+                        class="text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none {status ===
+                        'Printing'
                             ? 'hidden'
-                            : 'visible'} "
+                            : 'visible'} {hovered
+                            ? 'rotate-6 -translate-y-3'
+                            : ''} {uploading ? 'hidden' : 'visible'} "
                     >
                         UPLOAD
                     </div>
@@ -341,11 +362,17 @@
                     <div
                         class="{uploading
                             ? 'visible'
-                            : 'hidden'} flex flex-col items-center justify-center text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none {status === 'Printing' ? 'hidden' : 'visible'}"
+                            : 'hidden'} flex flex-col items-center justify-center text-4xl font-mono font-bold text-[#FFF5EF] transition-all duration-300 ease-in-out select-none {status ===
+                        'Printing'
+                            ? 'hidden'
+                            : 'visible'}"
                         id="spinning circle"
                     >
                         <svg
-                            class="animate-spin h-10 w-10 text-[#FFF5EF] mb-2 p-2 border-2 rounded-full border-[#FFF5EF] transition-all duration-300 ease-in-out select-none {status === 'Printing' ? 'hidden' : 'visible'} {uploading
+                            class="animate-spin h-10 w-10 text-[#FFF5EF] mb-2 p-2 border-2 rounded-full border-[#FFF5EF] transition-all duration-300 ease-in-out select-none {status ===
+                            'Printing'
+                                ? 'hidden'
+                                : 'visible'} {uploading
                                 ? 'visible'
                                 : 'hidden'} "
                             xmlns="http://www.w3.org/2000/svg"
@@ -359,39 +386,45 @@
                         >
                         UPLOADING
                     </div>
-                    <img class="aspect-video w-full h-full {status === 'Printing' ? 'visible' : 'hidden' }" src="{img}" alt="">
+                    <img
+                        class="aspect-video w-full h-full {status === 'Printing'
+                            ? 'visible'
+                            : 'hidden'}"
+                        src={img}
+                        alt=""
+                    />
                 </div>
 
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <!-- svelte-ignore a11y-no-static-element-interactions -->
                 <div
-                    class=" w-4/5 h-3/6 bg-[#252525]  mt-2 mr-[5.9rem] place-self-end rounded-t-lg rounded-b-xl p-4 gap-2"
+                    class=" w-4/5 h-3/6 bg-[#252525] mt-2 mr-[5.9rem] place-self-end rounded-t-lg rounded-b-xl p-4 gap-2"
                     id="printerControls"
                 >
                     <div class="grid grid-rows-1 grid-cols-2">
                         <div
-                        class="transition-all duration-300 ease-in-out select-none cursor-pointer text-lg text-[#FFF5EF] font-bold w-full h-12 relative bg-[#006442] rounded-lg  p-2"
-                        id="playPause"
-                        on:click={() => {
-                            // guess what this is.
-                            // console.log("play/pause");
-                            playPause("a");
-                        }}
+                            class="transition-all duration-300 ease-in-out select-none cursor-pointer text-lg text-[#FFF5EF] font-bold w-full h-12 relative bg-[#006442] rounded-lg p-2"
+                            id="playPause"
+                            on:click={() => {
+                                // guess what this is.
+                                // console.log("play/pause");
+                                playPause("a");
+                            }}
                         >
-                        <div class="flex flex-row items-stretch" id="play">
-                            <svg
-                                class="playIcon"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="currentColor"
-                                height="32"
-                                width="32"
-                                viewBox="0 0 384 512"
-                                ><path
-                                    d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"
-                                /></svg
-                            >
-                            <div class="px-4">Start Print</div>
-                        </div>
+                            <div class="flex flex-row items-stretch" id="play">
+                                <svg
+                                    class="playIcon"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="currentColor"
+                                    height="32"
+                                    width="32"
+                                    viewBox="0 0 384 512"
+                                    ><path
+                                        d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"
+                                    /></svg
+                                >
+                                <div class="px-4">Start Print</div>
+                            </div>
                         </div>
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <div
@@ -403,56 +436,83 @@
                                 playPause("a");
                             }}
                         >
-                        <div class="flex flex-row items-stretch" id="play">
-                            <svg
-                                class="pauseIcon"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="currentColor"
-                                height="32"
-                                width="32"
-                                viewBox="0 0 384 512"
-                                ><path
-                                    d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"
-                                /></svg
-                            >
-                            <div class="px-4">Pause Print</div>
+                            <div class="flex flex-row items-stretch" id="play">
+                                <svg
+                                    class="pauseIcon"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="currentColor"
+                                    height="32"
+                                    width="32"
+                                    viewBox="0 0 384 512"
+                                    ><path
+                                        d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"
+                                    /></svg
+                                >
+                                <div class="px-4">Pause Print</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="border-2 border-[#FFF5EF] text-[#FFF5EF] h-12 w-full p-2 font-semibold mt-4 flex flex-row rounded-lg" id="dropdown"
-                    on:mouseleave={() => (document.getElementById("dropdown-items").classList.remove("visible"))}
-                    on:click={() => {
-                        document.getElementById("dropdown-items").classList.toggle("visible");
-                    document.getElementById("dropdown-items").classList.toggle("hidden")}}
-                >
-                    Select a file
-                    <div 
-                    class="ml-auto mr-4 mt-2" 
-                    ><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class= "uploadIcon"  height="16" width="12" viewBox="0 0 384 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.--><path d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg></div>
-                </div>
-                <div class="hidden border-2 border-[#FFF5EF] text-[#FFF5EF] text-lg font-semibold px-2 rounded-sm select-none" id="dropdown-items">
-                    <!-- {each printer.files as afile} -->
-
-                    {#each files as afile}
-                        <div class="w-full rounded-sm"
-                            on:click={() => {
-                                runFile("test.gcode");
-                            }}
-                            on:mouseenter={() => {
-                                document.getElementById(afile.name).classList.add("bg-[#948e8a]");
-                                document.getElementById(afile.name).classList.remove("opacity-75");
-                            }}
-                            on:mouseleave={() => {
-                                document.getElementById(afile.name).classList.remove("bg-[#948e8a]");
-                                document.getElementById(afile.name).classList.add("opacity-75");
-                            }}
-                            id={afile.name}
-                        >
-                            {afile.name}
+                    <div
+                        class="border-2 border-[#FFF5EF] text-[#FFF5EF] h-12 w-full p-2 font-semibold mt-4 flex flex-row rounded-lg"
+                        id="dropdown"
+                        on:mouseleave={() =>
+                            document
+                                .getElementById("dropdown-items")
+                                .classList.remove("visible")}
+                        on:click={() => {
+                            document
+                                .getElementById("dropdown-items")
+                                .classList.toggle("visible");
+                            document
+                                .getElementById("dropdown-items")
+                                .classList.toggle("hidden");
+                        }}
+                    >
+                        Select a file
+                        <div class="ml-auto mr-4 mt-2">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="currentColor"
+                                class="uploadIcon"
+                                height="16"
+                                width="12"
+                                viewBox="0 0 384 512"
+                                ><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.--><path
+                                    d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"
+                                /></svg
+                            >
                         </div>
-                    {/each}
+                    </div>
+                    <div
+                        class="hidden border-2 border-[#FFF5EF] text-[#FFF5EF] text-lg font-semibold px-2 rounded-sm select-none"
+                        id="dropdown-items"
+                    >
+                        <!-- {each printer.files as afile} -->
+
+                        {#each files as afile}
+                            <div
+                                class="w-full rounded-sm"
+                                on:click={() => {
+                                    runFile("test.gcode");
+                                }}
+                                on:mouseenter={(e) => {
+                                    e.target.classList.add("bg-[#948e8a]");
+                                    e.target.classList.remove("opacity-75");
+                                }}
+                                on:mouseleave={() => {
+                                    e.target.classList.remove("bg-[#948e8a]");
+                                    e.target.classList.classList.add(
+                                        "opacity-75",
+                                    );
+                                }}
+                                id={afile}
+                            >
+                                {afile}
+                            </div>
+                        {/each}
+                    </div>
+                    <canvas id="graphCanvas" class="z-20 w-full h-5/6"></canvas>
                 </div>
-                <canvas id="graphCanvas" class="z-20 w-full h-5/6"></canvas>
             </div>
         </div>
     </div>
