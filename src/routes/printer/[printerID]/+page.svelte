@@ -5,7 +5,7 @@
         Made by Will
 
     */
-
+    import Chart from "$lib/components/Chart.svelte";
     import { onMount } from "svelte";
 
     export let data;
@@ -45,7 +45,7 @@
         ipAddr: "",
     };
 
-    let percentage = 5;
+    let percentage = 0;
 
     function openUploadDialouge() {
         if (uploading) {
@@ -124,7 +124,7 @@
         console.log(res.data.state);
         console.log(res.files);
         console.log("Page mounted");
-        // */
+        
         setInterval(async () => {
             try {
                 let res = await fetch(`/api/${printer.printerID}`);
@@ -203,6 +203,14 @@
         if (authorizationCode === "2324") {
             printerOperation = "cancel";
         }
+<<<<<<< HEAD
+=======
+
+        if (activity !== "Printing"){
+            printerOperation = "start";
+        }
+
+>>>>>>> 543495cc7885efa8f19406aa70158e7d00e38cc1
         const res = fetch(`/api/${printer.printerID}`, {
             method: "POST",
             body: JSON.stringify({
@@ -513,6 +521,13 @@
                     </div>
                     <canvas id="graphCanvas" class="z-20 w-full h-5/6"></canvas>
                 </div>
+<<<<<<< HEAD
+=======
+                <div class="z-20 w-full h-4/6">
+                    <Chart/>
+                </div>
+                
+>>>>>>> 543495cc7885efa8f19406aa70158e7d00e38cc1
             </div>
         </div>
     </div>

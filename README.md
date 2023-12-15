@@ -31,7 +31,5 @@ You can preview the production build with `pnpm run preview`.
 
 ```py
 # TODO
-# Implement logging
-# Implement logging playback
-# Implement graph to see active print's bed heat etc
+# Implement graph to see active print's bed heat etc (almost done)
 ```

@@ -1,12 +1,12 @@
 import { json } from "@sveltejs/kit";
 import { printers } from "../../printer.ts";
+import { data } from "$lib/components/data.ts";
 
 
 // Defines the get method for the server
 export const GET = async ({ params: { printerID }, fetch }) => {
     try {
         let printer = getPrinter(printerID);
-
         // debug code dont need
         console.log(printer);
 
@@ -17,10 +17,16 @@ export const GET = async ({ params: { printerID }, fetch }) => {
 
         // actual printer ip, can't ddos me tho haha
 
-        console.log(`http://${printer.ipAddr}/api/job`);
-        console.log({ 'X-Api-Key': printer.apiKey });
+        // console.log(`http://${printer.ipAddr}/api/job`);
+        // console.log({ 'X-Api-Key': printer.apiKey });
 
         const res = await fetch(`http://${printer.ipAddr}/api/job`, {
+            headers: {
+                'X-Api-Key': printer.apiKey
+            }
+        });
+
+        const printerData = await fetch(`http://${printer.ipAddr}/api/printer`, {
             headers: {
                 'X-Api-Key': printer.apiKey
             }
@@ -33,6 +39,20 @@ export const GET = async ({ params: { printerID }, fetch }) => {
         });
 
         files = await files.json();
+
+        let printerDataJson = await printerData.json();
+
+        data.datasets[0].data.push(printerDataJson.temperature.tool0.actual);
+        data.datasets[1].data.push(printerDataJson.temperature.bed.actual);
+
+        console.log(data.datasets[0].data);
+        console.log(data.datasets[1].data);
+
+        if (data.datasets[0].data.length > 7) {
+            data.datasets[0].data.shift();
+        } else if (data.datasets[1].data.length > 7) {
+            data.datasets[1].data.shift();
+        }
 
         console.log(files.files[0].children);
 
@@ -79,7 +99,7 @@ export async function POST({ params: { printerID }, request, fetch }) {
         }
 
         // proof of my other comment
-        const file = formData.get(fileName);
+        // const file = formData.get(fileName);
 
         // debug
         // console.log(lengthOfFile);
