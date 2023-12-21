@@ -7,6 +7,28 @@
     */
     import Chart from "$lib/components/Chart.svelte";
     import { onMount } from "svelte";
+    import { Line } from 'svelte-chartjs';
+
+    import {
+      Chart as ChartJS,
+      Title,
+      Tooltip,
+      Legend,
+      LineElement,
+      LinearScale,
+      PointElement,
+      CategoryScale,
+    } from 'chart.js';
+  
+    ChartJS.register(
+      Title,
+      Tooltip,
+      Legend,
+      LineElement,
+      LinearScale,
+      PointElement,
+      CategoryScale
+    );
 
     export let data;
     $: ({ res  } = data);
@@ -46,6 +68,51 @@
         printerID: 0,
         ipAddr: "",
     };
+
+    let graphData = {
+    labels: ['0s', '-30s', '-60s', '-90s', '-120s', '-150s', '-180s'],
+        datasets: [{
+            label: "Nozzle Temp",
+            fill: true,
+            lineTension: 0.3,
+            backgroundColor: 'rgba(225, 204,230, .3)',
+            borderColor: 'rgb(205, 130, 158)',
+            borderCapStyle: 'butt',
+            borderDash: [],
+            borderDashOffset: 0.0,
+            borderJoinStyle: 'miter',
+            pointBorderColor: 'rgb(205, 130,1 58)',
+            pointBackgroundColor: 'rgb(255, 255, 255)',
+            pointBorderWidth: 5,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: 'rgb(0, 0, 0)',
+            pointHoverBorderColor: 'rgba(220, 220, 220,1)',
+            pointHoverBorderWidth: 2,
+            pointRadius: 1,
+            pointHitRadius: 10,
+            data: [10, 100],
+        },{
+            label: "Bed Temp",
+            fill: true,
+            lineTension: 0.3,
+            backgroundColor: 'rgba(225, 204,230, .3)',
+            borderColor: 'rgb(205, 130, 158)',
+            borderCapStyle: 'butt',
+            borderDash: [],
+            borderDashOffset: 0.0,
+            borderJoinStyle: 'miter',
+            pointBorderColor: 'rgb(205, 130,1 58)',
+            pointBackgroundColor: 'rgb(255, 255, 255)',
+            pointBorderWidth: 5,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: 'rgb(0, 0, 0)',
+            pointHoverBorderColor: 'rgba(220, 220, 220,1)',
+            pointHoverBorderWidth: 2,
+            pointRadius: 1,
+            pointHitRadius: 10,
+            data: [10, 100],
+        }]
+};
 
     let percentage = 0;
 
@@ -88,6 +155,8 @@
 
     onMount(() => {
 
+        const graph = document.getElementById("graph")?.firstChild;
+
         document.addEventListener('keydown', function(event) {
             // Log the key code and key value to the console
             console.log('Key Code:', event.keyCode);
@@ -107,6 +176,8 @@
         // Should be the current state of the printer
         // structured similarly to this :
         // {"Printing", jobs: [{jobName: "test.gcode", progress: 0.5}]}
+
+        console.log(res);
 
         printerOperation = res.data;
         status = res.data.state;
@@ -441,7 +512,7 @@
                     {#each files as afile}
                         <div class="w-full rounded-sm"
                             on:click={() => {
-                                runFile("test.gcode");
+                                runFile(afile.name.toString());
                             }}
                             on:mouseenter={() => {
                                 document.getElementById(afile.name).classList.add("bg-[#948e8a]");
@@ -457,8 +528,8 @@
                         </div>
                     {/each}
                 </div>
-                <div class="z-20 w-full h-4/6">
-                    <Chart/>
+                <div class="z-20 w-full h-4/6" id="graph">
+                    <Line {graphData} options={{ responsive: true }} />
                 </div>
                 
             </div>

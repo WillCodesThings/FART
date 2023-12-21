@@ -1,6 +1,5 @@
 import { json } from "@sveltejs/kit";
 import { printers } from "../../printer.ts";
-import { data } from "$lib/components/data.ts";
 
 
 // Defines the get method for the server
@@ -26,11 +25,11 @@ export const GET = async ({ params: { printerID }, fetch }) => {
             }
         });
 
-        const printerData = await fetch(`http://${printer.ipAddr}/api/printer`, {
-            headers: {
-                'X-Api-Key': printer.apiKey
-            }
-        });
+        // const printerData = await fetch(`http://${printer.ipAddr}/api/printer`, {
+        //     headers: {
+        //         'X-Api-Key': printer.apiKey
+        //     }
+        // });
 
         let files = await fetch(`http://${printer.ipAddr}/api/files`, {
             headers: {
@@ -40,19 +39,19 @@ export const GET = async ({ params: { printerID }, fetch }) => {
 
         files = await files.json();
 
-        let printerDataJson = await printerData.json();
+        // let printerDataJson = await printerData.json();
 
-        data.datasets[0].data.push(printerDataJson.temperature.tool0.actual);
-        data.datasets[1].data.push(printerDataJson.temperature.bed.actual);
+        // data.datasets[0].data.push(printerDataJson.temperature.tool0.actual);
+        // data.datasets[1].data.push(printerDataJson.temperature.bed.actual);
 
-        console.log(data.datasets[0].data);
-        console.log(data.datasets[1].data);
+        // console.log(data.datasets[0].data);
+        // console.log(data.datasets[1].data);
 
-        if (data.datasets[0].data.length > 7) {
-            data.datasets[0].data.shift();
-        } else if (data.datasets[1].data.length > 7) {
-            data.datasets[1].data.shift();
-        }
+        // if (data.datasets[0].data.length > 7) {
+        //     data.datasets[0].data.shift();
+        // } else if (data.datasets[1].data.length > 7) {
+        //     data.datasets[1].data.shift();
+        // }
 
         console.log(files.files[0].children);
 
@@ -64,7 +63,7 @@ export const GET = async ({ params: { printerID }, fetch }) => {
         }
 
         // converting from nerd to human
-        // remember this not explaining again
+        // remember this not being explained again
         const data = await res.json();
 
         // dont forget to be able to actually use it
@@ -134,6 +133,8 @@ export async function POST({ params: { printerID }, request, fetch }) {
             const filename = a.query.filename;
             selectPrint(Cprinter, filename, fetch);
             return json("got it"); // amazing response
+        } else if (commnad.toLowerCase() === "img") {
+            return getImg(Cprinter, fetch);
         }
         
         controlPrint(Cprinter, commnad.toLowerCase(), fetch); // very secure authorization code ik
@@ -362,7 +363,17 @@ async function getImg(printer, fetch) {
 
     console.log(res.json());
 
-    const response = await fetch(`/thumb/l/usb/${res.json().job.file.path.split("/")[-1]}`, { method: 'GET', headers: { 'X-Api-Key': printer.apiKey } });
+    const response = await fetch(
+        `/thumb/l/usb/${res.json().job.file.path.split("/")[-1]}`, 
+    { method: 'GET', headers: { 'X-Api-Key': printer.apiKey } }
+    ).then(response => {return response.blob()}).then(blob => {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const base64 = event.target.result;
+          return base64;
+        };
+        return reader.readAsDataURL(blob);
+    });
 
     return response;  
 }
