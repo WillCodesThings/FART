@@ -31,4 +31,12 @@ export let printers = writable([
     apiKey: "UZtsmAmQjU4EuwJ",
     printerID: 4,
     ipAddr: "192.168.50.206"
+},
+    {
+    cardHovered: false,
+    name: "Larry",
+    image: "https://i.ebayimg.com/images/g/j6sAAOSwm1FhdZKe/s-l1200.webp",
+    apiKey: "8xjWDu9cUSVEXf7",
+    printerID: 3,
+    ipAddr: "192.168.50.103"
 },]);

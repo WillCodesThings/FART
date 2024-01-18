@@ -1,6 +1,8 @@
-import { get } from "svelte/store";
-
-
+/**
+ *
+ *
+ * @class Printer
+ */
 class Printer {
 
     // 1. Instance Variables
@@ -16,7 +18,18 @@ class Printer {
     private printThumbnail: string;
 
     // 2. Constructor
-    constructor(printerID: number, ipAddr: string, apiKey: string, printerName: string, image: string, fetch) {
+
+    /**
+     * Creates an instance of Printer.
+     * @param {number} printerID
+     * @param {string} ipAddr
+     * @param {string} apiKey
+     * @param {string} printerName
+     * @param {string} image
+     * @param {*} fetch the fetch API
+     * @memberof Printer
+     */
+    constructor(printerID: number, ipAddr: string, apiKey: string, printerName: string, image: string, fetch: any) {
         this.printerID = printerID;
         this.name = printerName;
         this.apiKey = apiKey;
@@ -58,11 +71,20 @@ class Printer {
         return this.printThumbnail;
     }
 
+
     public toggleCardHovered(): void {
         this.cardHovered = !this.cardHovered;
     }
 
     // 4. Actual Methods
+
+
+    /**
+     *
+     *
+     * @return {*} 
+     * @memberof Printer
+     */
     public async getPrinterStatus() {
         const res = await this.fetch(`http://${this.ipAddr}/api/printer`, {
             headers: {
@@ -78,9 +100,20 @@ class Printer {
         // converting from nerd to human
         const data = await res.json();
 
+        this.printerInfo = data;
+
         return data;
     }
 
+
+
+    /**
+     *
+     *
+     * @param {FormData} file
+     * @return {string} 
+     * @memberof Printer
+     */
     public async addFile(file: FormData) {
 
         let fileName: string = "";
@@ -95,7 +128,7 @@ class Printer {
             const res = await fetch(`http://${this.ipAddr}/api/v1/files/usb//${fileName}`, {
                 method: 'PUT',
                 body: file,
-                headers: { 'X-Api-Key': this.apiKey, 'Print-After-Upload': true, 'Content-Type': 'text/x.gcode' },
+                headers: { 'X-Api-Key': this.apiKey, 'Print-After-Upload': 'true', 'Content-Type': 'text/x.gcode' },
             });
 
             // Check if the response status is ok
@@ -108,21 +141,30 @@ class Printer {
                 console.error('Conflict: File already exists.');
             } else if (res.status === 413) {
                 console.error('Payload Too Large: File is too large.');
-            } else if (res.status === 415) {
-                console.error('Unsupported Media Type: File is not supported.');
             } else if (res.status === 507) {
                 console.error('Internal Server Error: No storage');
             } else if (res.status === 201) {
                 console.log('File uploaded successfully.');
             }
 
+            return res.status === 201 ? fileName : "There was an error uploading the file: " + res.status;
+
         } catch (error) {
             // if I get any of these errors I am horrible at coding
             console.error('Error processing the response:', error);
             throw error;
+            return "There was an error uploading the file";
         }
     }
 
+
+    /**
+     *
+     *
+     * @param {string} fileName
+     * @return {string} 
+     * @memberof Printer
+     */
     public async printFile(fileName: string) {
         const res = await this.fetch(`http://${this.ipAddr}/api/files/local/${fileName}`, {
             method: 'POST',
@@ -140,11 +182,21 @@ class Printer {
             throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
         }
 
-        const data = await res.json();
+        const data = await res.status === 201 || res.status === 204;
 
-        return data;
+        this.selectedFile = data ? fileName : "There was an error selecting the file";
+
+        return this.selectedFile;
     }
 
+
+    /**
+     *
+     *
+     * @param {string} fileName
+     * @return {string} 
+     * @memberof Printer
+     */
     public async deleteFile(fileName: string) {
         const res = await this.fetch(`http://${this.ipAddr}/api/v1/files/usb//${fileName}`, {
             method: 'DELETE',
@@ -158,11 +210,18 @@ class Printer {
             throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
         }
 
-        const data = await res.json();
+        const data = await res.status === 200 || res.status === 204;
 
-        return data;
+        return data ? "File deleted successfully" : "There was an error deleting the file";
     }
 
+
+    /**
+     *
+     *
+     * @return {*} 
+     * @memberof Printer
+     */
     public async getFiles() {
         const res = await this.fetch(`http://${this.ipAddr}/api/files/local`, {
             headers: {
@@ -179,18 +238,24 @@ class Printer {
         return data;
     }
 
+    /**
+     *
+     *
+     * @return {*}  {Promise<string>}
+     * @memberof Printer
+     */
     public async returnImageOfPrint(): Promise<string> {
         if (this.selectedFile === undefined || this.printerInfo.state.flags.link_state !== "IDLE") {
             return this.image;
         }
 
-        const res = await this.fetch(`http://${this.ipAddr}/api/files/local/${this.selectedFile}`, {
+        const res = await this.fetch(`http://${this.ipAddr}/api/files/local/${this.selectedFile}.`, {
             headers: {
                 'X-Api-Key': this.apiKey
             }
         });
 
-        res.json().then((data) => {
+        res.json().then((data: any) => {
             this.printThumbnail = data.refs.thumbnailBig;
         });
 

@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import { printers } from "../../printer.ts";
+import { base64, image } from "@sveu/browser";
 
 
 // Defines the get method for the server
@@ -25,11 +26,13 @@ export const GET = async ({ params: { printerID }, fetch }) => {
             }
         });
 
-        // const printerData = await fetch(`http://${printer.ipAddr}/api/printer`, {
-        //     headers: {
-        //         'X-Api-Key': printer.apiKey
-        //     }
-        // });
+        const printerData = await fetch(`http://${printer.ipAddr}/api/printer`, {
+            headers: {
+                'X-Api-Key': printer.apiKey
+            }
+        });
+
+
 
         let files = await fetch(`http://${printer.ipAddr}/api/files`, {
             headers: {
@@ -66,8 +69,16 @@ export const GET = async ({ params: { printerID }, fetch }) => {
         // remember this not being explained again
         const data = await res.json();
 
+        let printerTelemetry = await printerData.json();
+
+        console.log();
+        console.log();
+        console.log(printerTelemetry);
+        console.log();
+        console.log();
+
         // dont forget to be able to actually use it
-        return json({ data, printer, files });
+        return json({ data, printer, files, prinerTelem: printerTelemetry });
     } catch (error) {
         console.error(error);
         return json({ error: error.message });
@@ -115,7 +126,19 @@ export async function POST({ params: { printerID }, request, fetch }) {
 
         return json("got it"); // amazing response
     } catch (error) {
+        
         const a = await request.json();
+        if (a.query.command.toLowerCase() === "img") {
+            const image = await getImg(a.query.printer, fetch);
+            const response = new Response(image, {
+                status: 200,
+                headers: {
+                  'Content-Type': 'multipart/form-data',
+                },
+              });
+
+            return response;
+        }
         const method = a.query.method;
         const Cprinter = a.query.printer;
         const commnad = a.query.command;
@@ -133,8 +156,6 @@ export async function POST({ params: { printerID }, request, fetch }) {
             const filename = a.query.filename;
             selectPrint(Cprinter, filename, fetch);
             return json("got it"); // amazing response
-        } else if (commnad.toLowerCase() === "img") {
-            return getImg(Cprinter, fetch);
         }
         
         controlPrint(Cprinter, commnad.toLowerCase(), fetch); // very secure authorization code ik
@@ -359,21 +380,52 @@ async function selectPrint(printer, fileName: string, fetch) {
 }
 
 async function getImg(printer, fetch) {
-    const res = await fetch(printer.ipAddr + `/api/job`, { method: 'GET', headers: { 'X-Api-Key': printer.apiKey } });
+    const res = await fetch("http://" + printer.ipAddr + `/api/job`, { method: 'GET', headers: { 'X-Api-Key': printer.apiKey } });
 
-    console.log(res.json());
+    const formData = new FormData();
 
-    const response = await fetch(
-        `/thumb/l/usb/${res.json().job.file.path.split("/")[-1]}`, 
-    { method: 'GET', headers: { 'X-Api-Key': printer.apiKey } }
-    ).then(response => {return response.blob()}).then(blob => {
-        const reader = new FileReader();
-        reader.onload = function (event) {
-          const base64 = event.target.result;
-          return base64;
-        };
-        return reader.readAsDataURL(blob);
+    if (!res.ok) {
+        throw new Error(`Failed to fetch image: ${res.status} ${res.statusText}`);
+    }
+
+    const imgResponse = await res.json();
+    console.log();
+    console.log(imgResponse.job.file.response);
+    console.log();
+    const imgBlob = await fetch(`http://192.168.50.186/`, {
+        method: 'GET',
+        headers: {
+            'X-Api-Key': printer.apiKey,
+            'Accept': 'image/*',
+            'If-None-Match': '"71171903"',
+            'Cache-Control': 'no-cache',
+        },
     });
 
-    return response;  
+    const imageUrl = await processChunkedResponse(imgBlob);
+
+    console.log('Image URL:', imageUrl);
+
+    formData.append('image', imageUrl, 'image.png'); 
+
+    return formData;
+}
+
+async function processChunkedResponse(response) {
+    const reader = response.body.getReader();
+    let chunks = [];
+
+    while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+            break;
+        }
+
+        chunks.push(value);
+    }
+
+    const blob = new Blob(chunks, { type: 'image/png' });  // Adjust this based on the actual image type
+
+    return blob;
 }

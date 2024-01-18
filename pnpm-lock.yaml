@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@sveu/browser':
+    specifier: ^1.0.1
+    version: 1.0.1
   autoprefixer:
     specifier: ^10.4.16
     version: 10.4.16(postcss@8.4.31)
@@ -17,6 +20,9 @@ dependencies:
   svelte-chartjs:
     specifier: ^3.1.2
     version: 3.1.2(chart.js@4.4.1)(svelte@4.2.2)
+  svelte-frappe-charts:
+    specifier: ^1.10.0
+    version: 1.10.0(svelte@4.2.2)
   svelte-routing:
     specifier: ^2.6.0
     version: 2.6.0
@@ -390,6 +396,16 @@ packages:
       - supports-color
     dev: true
 
+  /@sveu/browser@1.0.1:
+    resolution: {integrity: sha512-Mz6Vx7erVabjL+yIM/9h9lqRjEbCiIRKjH9KD1VuR3xTTJdMiljoeWph9B+shg0n2VLhY2tz8PvTu6H3eqhF8g==}
+    dependencies:
+      '@sveu/shared': 1.0.1
+    dev: false
+
+  /@sveu/shared@1.0.1:
+    resolution: {integrity: sha512-waMJ+UXD5NV/M7L6lmXigY9Ry9TwhcBz+QDbYsDcq92bL7nlRUeh3ckvvAnxw1Nzw0T2JeEgmvZZblHuAHJL9Q==}
+    dev: false
+
   /@types/cookie@0.5.3:
     resolution: {integrity: sha512-SLg07AS9z1Ab2LU+QxzU8RCmzsja80ywjf/t5oqw+4NSH20gIGlhLOrBDm1L3PBWzPa4+wkgFQVZAjE6Ioj2ug==}
     dev: true
@@ -657,6 +673,10 @@ packages:
 
   /fraction.js@4.3.7:
     resolution: {integrity: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==}
+    dev: false
+
+  /frappe-charts@1.6.2:
+    resolution: {integrity: sha512-9TC3/+YVUi84yYoEbxFiSqu+1FQ5If/ydUNj6i8FRpwynd08t6a7RkS+IRJozAk6NfdL8/LVTTE1DUOjjKZZxg==}
     dev: false
 
   /fs.realpath@1.0.0:
@@ -1146,6 +1166,15 @@ packages:
       - stylus
       - sugarss
     dev: true
+
+  /svelte-frappe-charts@1.10.0(svelte@4.2.2):
+    resolution: {integrity: sha512-TkkcovOAeoieiDFFJS7p56E91WcS5qFq5lpkF+yuCBMG17HaC+7PrkT/0zzii0BBnYlOuumsfb9S5UmsDZRhdg==}
+    peerDependencies:
+      svelte: ^3.0.0
+    dependencies:
+      frappe-charts: 1.6.2
+      svelte: 4.2.2
+    dev: false
 
   /svelte-hmr@0.15.3(svelte@4.2.2):
     resolution: {integrity: sha512-41snaPswvSf8TJUhlkoJBekRrABDXDMdpNpT2tfHIv4JuhgvHqLMhEPGtaQn0BmbNSTkuz2Ed20DF2eHw0SmBQ==}
