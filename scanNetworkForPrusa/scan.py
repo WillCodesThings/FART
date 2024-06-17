@@ -38,8 +38,8 @@ def find_prusa_range(start, end):
 find_prusa_range(0, 256)  # Pass IP range as parameters
 print(stringToWrite)
 stringToWrite = stringToWrite + "]);"
-# with open("C:\\Users\\IDEA Center\\Documents\\Github\\FART\\src\\routes\\printer.ts", "w") as file:
-#     file.write(stringToWrite)
+with open("C:\\Users\\IDEA Center\\Documents\\Github\\FART\\src\\routes\\printer.ts", "w") as file:
+    file.write(stringToWrite)
 endTime = time.time()  # End timer
 print("")
 print("\n\nRan in : " + str(endTime - startTime) + "s")

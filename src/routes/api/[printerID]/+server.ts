@@ -1,6 +1,6 @@
 import { json } from "@sveltejs/kit";
 import { printers } from "../../printer.ts";
-import { data } from "$lib/components/data.ts";
+import { base64, image } from "@sveu/browser";
 
 
 // Defines the get method for the server
@@ -32,6 +32,8 @@ export const GET = async ({ params: { printerID }, fetch }) => {
             }
         });
 
+
+
         let files = await fetch(`http://${printer.ipAddr}/api/files`, {
             headers: {
                 'X-Api-Key': printer.apiKey
@@ -40,19 +42,19 @@ export const GET = async ({ params: { printerID }, fetch }) => {
 
         files = await files.json();
 
-        let printerDataJson = await printerData.json();
+        // let printerDataJson = await printerData.json();
 
-        data.datasets[0].data.push(printerDataJson.temperature.tool0.actual);
-        data.datasets[1].data.push(printerDataJson.temperature.bed.actual);
+        // data.datasets[0].data.push(printerDataJson.temperature.tool0.actual);
+        // data.datasets[1].data.push(printerDataJson.temperature.bed.actual);
 
-        console.log(data.datasets[0].data);
-        console.log(data.datasets[1].data);
+        // console.log(data.datasets[0].data);
+        // console.log(data.datasets[1].data);
 
-        if (data.datasets[0].data.length > 7) {
-            data.datasets[0].data.shift();
-        } else if (data.datasets[1].data.length > 7) {
-            data.datasets[1].data.shift();
-        }
+        // if (data.datasets[0].data.length > 7) {
+        //     data.datasets[0].data.shift();
+        // } else if (data.datasets[1].data.length > 7) {
+        //     data.datasets[1].data.shift();
+        // }
 
         console.log(files.files[0].children);
 
@@ -64,11 +66,19 @@ export const GET = async ({ params: { printerID }, fetch }) => {
         }
 
         // converting from nerd to human
-        // remember this not explaining again
+        // remember this not being explained again
         const data = await res.json();
 
+        let printerTelemetry = await printerData.json();
+
+        console.log();
+        console.log();
+        console.log(printerTelemetry);
+        console.log();
+        console.log();
+
         // dont forget to be able to actually use it
-        return json({ data, printer, files });
+        return json({ data, printer, files, prinerTelem: printerTelemetry });
     } catch (error) {
         console.error(error);
         return json({ error: error.message });
@@ -116,7 +126,19 @@ export async function POST({ params: { printerID }, request, fetch }) {
 
         return json("got it"); // amazing response
     } catch (error) {
+        
         const a = await request.json();
+        if (a.query.command.toLowerCase() === "img") {
+            const image = await getImg(a.query.printer, fetch);
+            const response = new Response(image, {
+                status: 200,
+                headers: {
+                  'Content-Type': 'multipart/form-data',
+                },
+              });
+
+            return response;
+        }
         const method = a.query.method;
         const Cprinter = a.query.printer;
         const commnad = a.query.command;
@@ -358,11 +380,52 @@ async function selectPrint(printer, fileName: string, fetch) {
 }
 
 async function getImg(printer, fetch) {
-    const res = await fetch(printer.ipAddr + `/api/job`, { method: 'GET', headers: { 'X-Api-Key': printer.apiKey } });
+    const res = await fetch("http://" + printer.ipAddr + `/api/job`, { method: 'GET', headers: { 'X-Api-Key': printer.apiKey } });
 
-    console.log(res.json());
+    const formData = new FormData();
 
-    const response = await fetch(`/thumb/l/usb/${res.json().job.file.path.split("/")[-1]}`, { method: 'GET', headers: { 'X-Api-Key': printer.apiKey } });
+    if (!res.ok) {
+        throw new Error(`Failed to fetch image: ${res.status} ${res.statusText}`);
+    }
 
-    return response;  
+    const imgResponse = await res.json();
+    console.log();
+    console.log(imgResponse.job.file.response);
+    console.log();
+    const imgBlob = await fetch(`http://192.168.50.186/`, {
+        method: 'GET',
+        headers: {
+            'X-Api-Key': printer.apiKey,
+            'Accept': 'image/*',
+            'If-None-Match': '"71171903"',
+            'Cache-Control': 'no-cache',
+        },
+    });
+
+    const imageUrl = await processChunkedResponse(imgBlob);
+
+    console.log('Image URL:', imageUrl);
+
+    formData.append('image', imageUrl, 'image.png'); 
+
+    return formData;
+}
+
+async function processChunkedResponse(response) {
+    const reader = response.body.getReader();
+    let chunks = [];
+
+    while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+            break;
+        }
+
+        chunks.push(value);
+    }
+
+    const blob = new Blob(chunks, { type: 'image/png' });  // Adjust this based on the actual image type
+
+    return blob;
 }
