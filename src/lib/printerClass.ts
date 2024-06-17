@@ -160,7 +160,6 @@ class Printer {
 
     /**
      *
-     *
      * @param {string} fileName
      * @return {string} 
      * @memberof Printer

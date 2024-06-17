@@ -17,6 +17,9 @@ dependencies:
   svelte-chartjs:
     specifier: ^3.1.2
     version: 3.1.2(chart.js@4.4.1)(svelte@4.2.2)
+  svelte-feather-icons:
+    specifier: ^4.1.0
+    version: 4.1.0
   svelte-routing:
     specifier: ^2.6.0
     version: 2.6.0
@@ -1147,6 +1150,12 @@ packages:
       - sugarss
     dev: true
 
+  /svelte-feather-icons@4.1.0:
+    resolution: {integrity: sha512-fcTL4VzEN4BoccQJjKiui0b9DWEsmO6zGpI0tQTJbthRtNrYheoU487zyA1BD8rj9kj6jbKGmGVo7zbSdRvMvA==}
+    dependencies:
+      svelte: 3.59.2
+    dev: false
+
   /svelte-hmr@0.15.3(svelte@4.2.2):
     resolution: {integrity: sha512-41snaPswvSf8TJUhlkoJBekRrABDXDMdpNpT2tfHIv4JuhgvHqLMhEPGtaQn0BmbNSTkuz2Ed20DF2eHw0SmBQ==}
     engines: {node: ^12.20 || ^14.13.1 || >= 16}
@@ -1206,6 +1215,11 @@ packages:
 
   /svelte-routing@2.6.0:
     resolution: {integrity: sha512-j25QWdWUzVMDCclxT2mIy7Xto/s2qcC9zpxCZzGE5WS42xo+xT9QQOtNFEXVHqVHEkJjaCOdL7LvHb320FypKw==}
+    dev: false
+
+  /svelte@3.59.2:
+    resolution: {integrity: sha512-vzSyuGr3eEoAtT/A6bmajosJZIUWySzY2CzB3w2pgPvnkUjGqlDnsNnA0PMO+mMAhuyMul6C2uuZzY6ELSkzyA==}
+    engines: {node: '>= 8'}
     dev: false
 
   /svelte@4.2.2:
