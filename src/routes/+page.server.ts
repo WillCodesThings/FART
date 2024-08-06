@@ -1,7 +1,8 @@
 import { json } from "@sveltejs/kit";
+import { printers } from "$lib";
 
 /** @type {import('./$types').PageServerLoad} */
-export async function load({ fetch, params: { printerID } }) {
+export async function load() {
   try {
     // Defines data in the +page.svelte file to pass to the page
     // Don't really need this file anymore so its just vanity
@@ -15,16 +16,25 @@ export async function load({ fetch, params: { printerID } }) {
 
     // });
 
+    // console.log(printers)
+
     // res = res.json();
 
-    res = { hi: "there" };
-
-    console.log(res);
-
     return {
-      res,
+      printers,
     };
   } catch (error) {
     console.log(error);
   }
+}
+
+export async function post({ body }) {
+    try {
+        console.log(body);
+        return {
+        body
+        }
+    } catch (error) {
+        console.log(error);
+    }
 }

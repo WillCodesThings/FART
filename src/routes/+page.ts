@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { printers } from "./printer";
+import { printers } from "../lib/printer";
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ fetch }) {

@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { printers } from "../../printer.ts";
+import { printers } from "../../../lib/printer.js";
 import { base64, image } from "@sveu/browser";
 
 

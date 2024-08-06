@@ -1,38 +1,93 @@
 <script>
-    import { MonitorIcon, FolderIcon, BarChart2Icon } from "svelte-feather-icons";
-    export let printer;
+    import Grid from "svelte-grid";
+    import gridHelp from "svelte-grid/build/helper/index.mjs";
 
-    let currentNav = {
-        monitor: true,
-        files: false,
-        analytics: false,
-    };
+    import HumidityWidget from "./Widgets/HumidityWidget.svelte";
+    import TemperatureWidget from "./Widgets/TemperatureWidget.svelte";
+    import PrinterStatusWidget from "./Widgets/PrinterStatusWidget.svelte";
+    import PrintProgressWidget from "./Widgets/PrintProgressWidget.svelte";
+    import FilamentLevelWidget from "./Widgets/FilamentLevelWidget.svelte";
 
-    function changeNav(toChange) {
-        for (let key in currentNav) {
-            currentNav[key] = false;
+    const id = () => "_" + Math.random().toString(36).substr(2, 9);
+
+    let items = [
+        {
+            6: gridHelp.item({
+                x: 0,
+                y: 0,
+                w: 2,
+                h: 1,
+            }),
+            id: id(),
+            component: HumidityWidget,
+            props: { humidity: 37.8, previousHumidity: 41.3, humidityHistory: [41.3, 39.5, 38.7, 37.8] }
+        },
+        {
+            6: gridHelp.item({
+                x: 2,
+                y: 0,
+                w: 2,
+                h: 1,
+            }),
+            id: id(),
+            component: TemperatureWidget,
+            props: { temperature: 200, previousTemperature: 195, temperatureHistory: [190, 192, 198, 200] }
+        },
+        {
+            6: gridHelp.item({
+                x: 4,
+                y: 0,
+                w: 2,
+                h: 1,
+            }),
+            id: id(),
+            component: PrinterStatusWidget,
+            props: { status: "Printing" }
+        },
+        {
+            6: gridHelp.item({
+                x: 0,
+                y: 1,
+                w: 2,
+                h: 2,
+            }),
+            id: id(),
+            component: PrintProgressWidget,
+            props: { progress: 75 }
+        },
+        {
+            6: gridHelp.item({
+                x: 2,
+                y: 1,
+                w: 2,
+                h: 1,
+            }),
+            id: id(),
+            component: FilamentLevelWidget,
+            props: { level: 50 }
         }
-        currentNav[toChange] = true;
-    }
+    ];
 
-    let files = ["No files found"];
+    const breakpoint = 1200;
+    const column = 6;
 
+    const cols = [[breakpoint, column]];
 </script>
-<div class="w-full h-full flex flex-col justify-center items-center text-center cursor-auto text-[#C2B8B2]">
-    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <ul class="absolute bg-[#3C362A] h-full p-4 left-0" id="navbar">
 
-        <li class="my-6" on:click={() => changeNav('monitor')}>
-            <MonitorIcon class="w-10 h-10 cursor-pointer {currentNav.monitor ? 'fill-[#C2B8B2]' : 'fill-none'}"  />
-        </li>
+<Grid {cols} bind:items={items} let:item={item}>
+    <svelte:component this={item.component} {...item.props} />
+</Grid>
 
-        <li class="mb-6" on:click={() => {changeNav('files')}}>
-            <FolderIcon class="w-10 h-10 cursor-pointer {currentNav.files ? 'fill-[#C2B8B2]' : 'fill-none'}"  />
-        </li>
-        
-        <li on:click={() => changeNav('analytics')}>
-            <BarChart2Icon class="w-10 h-10 cursor-pointer {currentNav.analytics ? 'fill-[#C2B8B2]' : 'fill-none'}"  />
-        </li>
-    </ul>
-</div>
+<style>
+    .widget {
+        background: #1f2937;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        height: 100%;
+        width: 100%;
+    }
+</style>

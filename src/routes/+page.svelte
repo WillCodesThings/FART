@@ -1,87 +1,90 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { get } from "svelte/store";
-    import { printers } from "./printer";
+
     import img from "$lib/images/bgImg.png";
 
     import Dashboard from "./Dashboard.svelte";
+    import Layout from "./+layout.svelte";
 
-    const Cprinters = get(printers);
+    export let data;
 
-    let cards = {
-        printer1: false,
-        printer2: false,
-        printer3: false,
-        printer4: false,
-        printer5: false,
-        printer6: false,
-        printer7: false,
-        printer8: false,
-        printer9: false,
-        printer10: false,
-    };
+    let { printers } = data;
+    // console.log(printers);
 
-    let expandedCard = null;
-
-    const cprinter = Cprinters[0];
+    $: expandedCard = (printers) ? printers.filter(printer => printer.select) : [];
+    $: console.log(expandedCard);
 
     onMount(() => {
-        console.log(Cprinters[0]);
+        console.log(printers);
         console.log("Hello from the page component!");
     });
 
-    expandedCard = cprinter.printerID;
+    // expandedCard = cprinter.printerID;
 
     function handleCardClick(printerID) {
         expandedCard = expandedCard === printerID ? null : printerID;
     }
+
+
+    function toggleSelect(Toggleprinter: any): void {
+        printers = printers.map(printer =>
+            printer === Toggleprinter ? { ...printer, select: !printer.select } : printer
+        );
+       tick();
+    }
 </script>
 
 <section class="bg-[#31581E]">
-    <div class="bg-transparent w-full h-[200dvh] md:h-[100dvh]" id="printerContainer">
-        <div class="flex flex-col md:grid md:grid-cols-5 md:grid-rows-2 w-full h-full p-5 items-center z-10 opacity-100">
+    <div class="bg-transparent w-full h-[200dvh] md:h-[100dvh] z-10" id="printerContainer">
+        <div class="flex flex-col md:grid md:grid-cols-5 md:grid-rows-2 w-full h-full p-5 gap-2 items-center z-10 opacity-100">
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <!-- svelte-ignore a11y-no-static-element-interactions -->
-            {#each Cprinters as printer}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
-                    class="{(expandedCard === printer.printerID) ? "cursor-none" : "cursor-pointer"} w-[96%] h-[30rem] md:w-[80%] md:h-full flex flex-col bg-[#294A18] shadow-md items-center rounded-lg p-2 z-10 opacity-100 cursor-pointer transition-all duration-500 transform {expandedCard === printer.printerID ? 'expanded' : ''}"
-                    id="printer{printer.printerID}"
-                    on:mouseenter={() => cards["printer" + printer.printerID] = true}
-                    on:mouseleave={() => cards["printer" + printer.printerID] = false}
-                    on:click={() => {if (!(expandedCard === printer.printerID)) {handleCardClick(printer.printerID)}}}
-                >
-                    {#if expandedCard === printer.printerID}
-                        <!-- Dashboard content -->
-                        <Dashboard printer={printer} />
-                    {:else}
-                        <!-- Card content -->
-                        <div class="w-full h-[80%] overflow-hidden py-2 z-10" id="printerImage">
+            {#if expandedCard.length > 0}
+                <Dashboard printer={expandedCard[0]} />
+            {:else}
+                <!-- {#each printers as printer}
+                    <div
+                        class="bg-black"
+                        on:click={() => handleCardClick(printer.printerID)}
+                    >
+                        <div class="w-20 h-20 rounded-full bg-[#294A18] flex justify-center items-center">
                             <img
-                                class="w-full h-full printerImage rounded-lg shadow-md opacity-100 z-10 ease-in-out duration-200 {cards['printer' + printer.printerID] ? 'border-0 p-0 shadow-2xl' : 'border-4 p-2'}"
+                                class="w-16 h-16"
                                 src={printer.image}
-                                alt={printer.name}
+                                alt=""
                             />
                         </div>
-
-                        <div
-                            class="flex flex-col justify-center w-5/6 h-1/6 rounded-xl text-4xl font-bold text-[#FFF5EF] text-center z-10 overflow-hidden"
-                            id={"name" + cprinter.printerID}
-                            data-value={cprinter.name}
+                        
+                    </div>
+                {/each} -->
+                {#if printers}
+                    {#each printers as printer}
+                        <div 
+                            class="w-full max-w-sm bg-white shadow-lg rounded-lg overflow-hidden m-4 cursor-pointer z-10"
+                            on:click={() => toggleSelect(printer)}
                         >
-                            <ul class="list-none p-2 m-0 h-10 transition-transform duration-300 {cards['printer' + cprinter.printerID] ? 'animate-scrollUp' : ''}">
-                                <li>{cprinter.name}</li>
-                                {#each cprinter.name.split("") as letter}
-                                    <li class="mt-4">{cprinter.name}</li>
-                                {/each}
-                            </ul>
+                            <div class="bg-gray-900 bg-opacity-40 flex justify-center items-center h-48 ">
+                                <img
+                                    class="w-full h-full object-cover"
+                                    src={printer.image}
+                                    alt={printer.name}
+                                />
+                            </div>
+                            <div class="p-4 bg-gray-800">
+                                <h2 class="text-xl font-bold text-white">{printer.name}</h2>
+                                <p class="mt-2 text-gray-400 text-ellipsis">{printer.desc}</p>
+                                <div class="flex items-center justify-between mt-4">
+                                    <span class="text-gray-300 text-sm">Model: {printer.model}</span>
+                                    <span class="text-gray-300 text-sm">Status: {printer.status}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="text-lg text-[#FFF5EF] font-semibold py-2 z-10">
-                            Status: IDLE
-                        </div>
-                    {/if}
-                </div>
-            {/each}
+                    {/each}
+                {/if}
+
+            {/if}
+
         </div>
     </div>
     <img
