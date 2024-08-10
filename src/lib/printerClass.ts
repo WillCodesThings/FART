@@ -1,273 +1,158 @@
-/**
- *
- *
- * @class Printer
- */
+// Printer class constructor
 class Printer {
-
-    // 1. Instance Variables
-    private cardHovered: boolean;
-    private printerID: number;
-    private name: string;
-    private image: string;
-    private apiKey: string;
-    private ipAddr: string;
-    private fetch;
-    private selectedFile: string;
-    private printerInfo: any;
-    private printThumbnail: string;
-
-    // 2. Constructor
-
-    /**
-     * Creates an instance of Printer.
-     * @param {number} printerID
-     * @param {string} ipAddr
-     * @param {string} apiKey
-     * @param {string} printerName
-     * @param {string} image
-     * @param {*} fetch the fetch API
-     * @memberof Printer
-     */
-    constructor(printerID: number, ipAddr: string, apiKey: string, printerName: string, image: string, fetch: any) {
-        this.printerID = printerID;
-        this.name = printerName;
-        this.apiKey = apiKey;
-        this.ipAddr = ipAddr;
-        this.image = image;
-        this.cardHovered = false;
-        this.fetch = fetch;
-        this.printerInfo = this.getPrinterStatus();
-        this.selectedFile = "";
-        this.printThumbnail = "";
+  constructor(printerID) {
+    this.printerID = printerID;
+    this.printer = this.getPrinter(printerID);
+    if (!this.printer) {
+      throw new Error(`Printer with ID ${printerID} not found`);
     }
+  }
 
-    // 3. Getter/Setter Methods
-    public getPrinterID(): number {
-        return this.printerID;
+  // Get printer details from printers.js
+  getPrinter(printerID) {
+    let printersS;
+    const unsubscribe = printers.subscribe((value) => {
+      printersS = value;
+    });
+    let printer = {};
+    printersS.forEach((p) => {
+      if (p.printerID === parseInt(printerID)) {
+        printer = p;
+      }
+    });
+    return printer;
+  }
+
+  // Fetch job status from the printer
+  async getJobStatus(fetch) {
+    const res = await fetch(`http://${this.printer.ipAddr}/api/job`, {
+      headers: { "X-Api-Key": this.printer.apiKey },
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
     }
+    return await res.json();
+  }
 
-    public getName(): string {
-        return this.name;
-    }
+  // Fetch printer data
+  async getPrinterData(fetch) {
+    const res = await fetch(`http://${this.printer.ipAddr}/api/printer`, {
+      headers: { "X-Api-Key": this.printer.apiKey },
+    });
+    return await res.json();
+  }
 
-    public getImage(): string {
-        return this.image;
-    }
+  // Fetch available files on the printer
+  async getFiles(fetch) {
+    let res = await fetch(`http://${this.printer.ipAddr}/api/files`, {
+      headers: { "X-Api-Key": this.printer.apiKey },
+    });
+    res = await res.json();
+    return res.files[0].children.length === 0
+      ? ["No files found"]
+      : res.files[0].children;
+  }
 
-    public getApiKey(): string {
-        return this.apiKey;
-    }
-
-    public getIpAddr(): string {
-        return this.ipAddr;
-    }
-
-    public getCardHovered(): boolean {
-        return this.cardHovered;
-    }
-
-    public async getPrintThumbnail(): Promise<string> {
-        return this.printThumbnail;
-    }
-
-
-    public toggleCardHovered(): void {
-        this.cardHovered = !this.cardHovered;
-    }
-
-    // 4. Actual Methods
-
-
-    /**
-     *
-     *
-     * @return {*} 
-     * @memberof Printer
-     */
-    public async getPrinterStatus() {
-        const res = await this.fetch(`http://${this.ipAddr}/api/printer`, {
-            headers: {
-                'X-Api-Key': this.apiKey
-            }
-        });
-
-        // check if the printer is not dead
-        if (!res.ok) {
-            throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
+  // Upload and start a print job
+  async addPrint(formData, fileName, fetch, lastIncrement = 0) {
+    try {
+      const res = await fetch(
+        `http://${this.printer.ipAddr}/api/v1/files/usb//${
+          lastIncrement === 0 ? "" : lastIncrement
+        }${fileName}`,
+        {
+          method: "PUT",
+          body: formData,
+          headers: {
+            "X-Api-Key": this.printer.apiKey,
+            "Print-After-Upload": true,
+            "Content-Type": "text/x.gcode",
+          },
         }
+      );
 
-        // converting from nerd to human
-        const data = await res.json();
-
-        this.printerInfo = data;
-
-        return data;
-    }
-
-
-
-    /**
-     *
-     *
-     * @param {FormData} file
-     * @return {string} 
-     * @memberof Printer
-     */
-    public async addFile(file: FormData) {
-
-        let fileName: string = "";
-
-        for (const [name, file1] of file.entries()) {
-            fileName = name;
-            break;
+      if (!res.ok) {
+        if (res.status === 409) {
+          await this.addPrint(formData, fileName, fetch, lastIncrement + 1);
+        } else {
+          throw new Error(`HTTP error! Status: ${res.status}`);
         }
-
-        try {
-            console.log(`http://${this.ipAddr}/api/files/usb//${fileName}`);
-            const res = await fetch(`http://${this.ipAddr}/api/v1/files/usb//${fileName}`, {
-                method: 'PUT',
-                body: file,
-                headers: { 'X-Api-Key': this.apiKey, 'Print-After-Upload': 'true', 'Content-Type': 'text/x.gcode' },
-            });
-
-            // Check if the response status is ok
-            console.log(res.status);
-            if (!res.ok) {
-                throw new Error(`HTTP error! Status: ${res.status}`);
-            }
-
-            if (res.status === 409) {
-                console.error('Conflict: File already exists.');
-            } else if (res.status === 413) {
-                console.error('Payload Too Large: File is too large.');
-            } else if (res.status === 507) {
-                console.error('Internal Server Error: No storage');
-            } else if (res.status === 201) {
-                console.log('File uploaded successfully.');
-            }
-
-            return res.status === 201 ? fileName : "There was an error uploading the file: " + res.status;
-
-        } catch (error) {
-            // if I get any of these errors I am horrible at coding
-            console.error('Error processing the response:', error);
-            throw error;
-            return "There was an error uploading the file";
-        }
+      }
+    } catch (error) {
+      console.error("Error processing the response:", error);
+      throw error;
     }
+  }
 
+  // Control the printer (pause, resume, etc.)
+  async controlPrint(Caction, fetch) {
+    const endpoint = `http://${this.printer.ipAddr}/api/job`;
+    const apiKeyHeader = { "X-Api-Key": this.printer.apiKey };
+    const requestBody = { command: Caction, action: Caction };
 
-    /**
-     *
-     * @param {string} fileName
-     * @return {string} 
-     * @memberof Printer
-     */
-    public async printFile(fileName: string) {
-        const res = await this.fetch(`http://${this.ipAddr}/api/files/local/${fileName}`, {
-            method: 'POST',
-            headers: {
-                'X-Api-Key': this.apiKey,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                command: 'select',
-                print: true
-            })
-        });
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...apiKeyHeader,
+        },
+        body: JSON.stringify(requestBody),
+      });
 
-        if (!res.ok) {
-            throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
-        }
-
-        const data = await res.status === 201 || res.status === 204;
-
-        this.selectedFile = data ? fileName : "There was an error selecting the file";
-
-        return this.selectedFile;
+      if (response.status !== 204) {
+        throw new Error(
+          `Unexpected response: ${response.status} ${response.statusText}`
+        );
+      }
+    } catch (error) {
+      console.error("Error executing command:", error.message);
     }
+  }
 
+  // Select and start a print job
+  async selectPrint(fileName, fetch) {
+    const res = await fetch(
+      `${this.printer.ipAddr}/api/files/local/${fileName}`,
+      {
+        method: "POST",
+        body: JSON.stringify({ command: "select" }),
+        headers: { "X-Api-Key": this.printer.apiKey },
+      }
+    );
+    return res.status;
+  }
 
-    /**
-     *
-     *
-     * @param {string} fileName
-     * @return {string} 
-     * @memberof Printer
-     */
-    public async deleteFile(fileName: string) {
-        const res = await this.fetch(`http://${this.ipAddr}/api/v1/files/usb//${fileName}`, {
-            method: 'DELETE',
-            headers: {
-                'X-Api-Key': this.apiKey,
-                'Content-Type': 'application/json',
-            }
-        });
-
-        if (!res.ok) {
-            throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
-        }
-
-        const data = await res.status === 200 || res.status === 204;
-
-        return data ? "File deleted successfully" : "There was an error deleting the file";
+  // Get image from the printer
+  async getImg(fetch) {
+    const res = await fetch(`http://${this.printer.ipAddr}/api/job`, {
+      method: "GET",
+      headers: { "X-Api-Key": this.printer.apiKey },
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch image: ${res.status} ${res.statusText}`);
     }
+    const imgBlob = await fetch(`http://${this.printer.ipAddr}/`, {
+      method: "GET",
+      headers: {
+        "X-Api-Key": this.printer.apiKey,
+        Accept: "image/*",
+        "If-None-Match": '"71171903"',
+        "Cache-Control": "no-cache",
+      },
+    });
+    return await this.processChunkedResponse(imgBlob);
+  }
 
-
-    /**
-     *
-     *
-     * @return {*} 
-     * @memberof Printer
-     */
-    public async getFiles() {
-        const res = await this.fetch(`http://${this.ipAddr}/api/files/local`, {
-            headers: {
-                'X-Api-Key': this.apiKey
-            }
-        });
-
-        if (!res.ok) {
-            throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
-        }
-
-        const data = await res.json();
-
-        return data;
+  // Process the response in chunks for image fetching
+  async processChunkedResponse(response) {
+    const reader = response.body.getReader();
+    let chunks = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
     }
-
-    /**
-     *
-     *
-     * @return {*}  {Promise<string>}
-     * @memberof Printer
-     */
-    public async returnImageOfPrint(): Promise<string> {
-        if (this.selectedFile === undefined || this.printerInfo.state.flags.link_state !== "IDLE") {
-            return this.image;
-        }
-
-        const res = await this.fetch(`http://${this.ipAddr}/api/files/local/${this.selectedFile}.`, {
-            headers: {
-                'X-Api-Key': this.apiKey
-            }
-        });
-
-        res.json().then((data: any) => {
-            this.printThumbnail = data.refs.thumbnailBig;
-        });
-
-        return this.printThumbnail;
-    }
-
-
-
-    public equals(otherPrinter: Printer): boolean {
-        return (this.printerID === otherPrinter.getPrinterID()) && (this.apiKey === otherPrinter.getApiKey());
-    }
-
-    public toString(): string {
-        return `Printer: ${this.name} with ID ${this.printerID} at ${this.ipAddr}`;
-    }
+    return new Blob(chunks, { type: "image/png" });
+  }
 }

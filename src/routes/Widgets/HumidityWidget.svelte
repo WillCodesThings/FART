@@ -1,58 +1,65 @@
 <script>
-    export let humidity = 37.8;
-    export let previousHumidity = 41.3;
-    export let humidityHistory = [41.3, 39.5, 38.7, 37.8]; // Example data
-
-    function getSmoothPath(data) {
-        const max = Math.max(...data);
-        const min = Math.min(...data);
-        const range = max - min || 1;
-        const normalizedData = data.map(d => ((d - min) / range) * 18 + 1); // Adjusted to add padding
-        const points = normalizedData.map((d, i) => [(i / (data.length - 1)) * 98 + 1, 20 - d]); // Adjusted to add padding
-
-        const pathData = points.reduce(
-            (acc, point, i, a) =>
-                i === 0
-                    ? `M ${point[0]},${point[1]}`
-                    : `${acc} ${i === 1 ? '' : 'S'} ${point[0] - (point[0] - a[i - 1][0]) / 2},${a[i - 1][1]} ${point[0]},${point[1]}`,
-            ''
-        );
-
-        return pathData;
-    }
-</script>
-
-<div class="bg-black text-white rounded-lg shadow-md flex flex-col justify-between h-full w-full">
-    <div class="p-2 flex items-center justify-between">
-        <div class="text-lg font-semibold">Humidity</div>
-        <div class="text-xl">💧</div>
+    import { Line } from 'svelte-chartjs';
+    import { Chart, registerables } from 'chart.js';
+    import { DropletIcon } from 'svelte-feather-icons';
+  
+    // Register all necessary components for Chart.js
+    Chart.register(...registerables);
+  
+    export let props = { humidity: 37.8, previousHumidity: 41.3, humidityHistory: [41.3, 39.5, 38.7, 37.8] };
+  
+    const data = {
+      labels: Array.from({ length: props.humidityHistory.length }, (_, i) => `Point ${i + 1}`),
+      datasets: [
+        {
+          label: 'Humidity',
+          data: props.humidityHistory,
+          borderColor: '#f97316', // Orange color for the line
+          backgroundColor: 'rgba(249, 115, 22, 0.1)', // Orange gradient for the fill
+          fill: true,
+          tension: 0.4, // Smooth curve
+          pointRadius: 0, // No points on the line
+          borderWidth: 2, // Line width
+        }
+      ]
+    };
+  
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          display: false, // Hide X axis
+        },
+        y: {
+          display: false, // Hide Y axis
+          min: Math.min(...props.humidityHistory) - 2, // Add some padding below
+          max: Math.max(...props.humidityHistory) + 2, // Add some padding above
+        }
+      },
+      plugins: {
+        legend: { display: false }, // Hide legend
+        tooltip: { enabled: false } // Disable tooltips
+      },
+      layout: {
+        padding: 0, // No padding around the chart
+      }
+    };
+  </script>
+  
+  <div class="bg-black w-full h-full rounded-lg flex flex-col justify-center items-center ">
+    <div class="text-white font-bold absolute top-2 left-2 flex flex-row w-[95%]">
+        Humidity
+        <div class="ml-auto text-white"><DropletIcon class="fill-white" /></div>
     </div>
-    <div class="p-2 text-4xl font-bold">
-        {humidity}%
+    <div class="text-3xl text-white font-bold">
+        {props.humidity} %
     </div>
-    <div class="relative flex-grow p-2">
-        <div class="absolute inset-0 w-full h-full">
-            <svg viewBox="0 0 100 20" preserveAspectRatio="none">
-                <defs>
-                    <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#f97316" stop-opacity="0.8" />
-                        <stop offset="100%" stop-color="#f97316" stop-opacity="0" />
-                    </linearGradient>
-                </defs>
-                <path d="{getSmoothPath(humidityHistory)}" fill="none" stroke="#f97316" stroke-width="2" />
-                <path d="{`${getSmoothPath(humidityHistory)} L 99,20 L 1,20 Z`}" fill="url(#gradient)" />
-            </svg>
+    <div class="absolute inset-0 w-full h-full">
+        <Line {data} {options} />
+        <div class="bg-black opacity-30 text-white text-xs p-2 absolute bottom-2 left-4 rounded-xl">
+            {props.previousHumidity}%
         </div>
-        <div class="absolute bottom-0 left-0 text-sm text-gray-400">
-            {previousHumidity}
-        </div>
     </div>
-</div>
-
-<style>
-    svg {
-        display: block;
-        width: 100%;
-        height: 100%;
-    }
-</style>
+    
+  </div>
