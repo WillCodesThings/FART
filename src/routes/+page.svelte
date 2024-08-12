@@ -1,11 +1,9 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
-    import { get } from "svelte/store";
 
     import img from "$lib/images/bgImg.png";
 
     import Dashboard from "./Dashboard.svelte";
-    import Layout from "./+layout.svelte";
 
     export let data;
 

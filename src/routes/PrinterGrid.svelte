@@ -1,7 +1,7 @@
 <script lang="ts">
   import Grid, { GridItem, type LayoutChangeDetail } from 'svelte-grid-extended';
   import { writable } from 'svelte/store';
-  import { EditIcon, SaveIcon } from 'svelte-feather-icons';
+  import { EditIcon, SaveIcon, Trash2Icon } from 'svelte-feather-icons';
   import FilamentLevel from './Widgets/FilamentLevelWidget.svelte';
   import HumidityLevel from './Widgets/HumidityWidget.svelte';
   import PrintProgress from './Widgets/PrintProgressWidget.svelte';
@@ -14,8 +14,11 @@
   import FileDisplay from './Widgets/PrinterFileDisplay.svelte';
   import PrinterInfo from './Widgets/PrinterInfoWidget.svelte';
 
+  export let printerData;
+
   let readOnly = false;
   let saveKey = 0; // This will be used to force re-rendering
+  let deleteMode = writable(false); // Track if delete mode is active
 
   function getFromLocalStorage(key, defaultValue) {
     if (typeof localStorage !== 'undefined') {
@@ -45,6 +48,19 @@
   ]);
 
   let layout = writable(initialLayout);
+  let availableWidgets = writable([
+    { id: 'a', component: 'FilamentLevel' },
+    { id: 'b', component: 'HumidityLevel' },
+    { id: 'c', component: 'PrintProgress' },
+    { id: 'd', component: 'TemperatureLevel' },
+    { id: 'e', component: 'ChatAi' },
+    { id: 'f', component: 'Upload' },
+    { id: 'g', component: 'PrinterHead' },
+    { id: 'h', component: 'TimeRemaining' },
+    { id: 'i', component: 'FileDisplay' },
+    { id: 'j', component: 'PrinterInfo' }
+    // Add more widgets as needed
+  ]);
 
   // Function to handle layout changes and update the layout store
   const onLayoutChange = (event: CustomEvent<LayoutChangeDetail>) => {
@@ -54,11 +70,14 @@
       );
     });
 
-    console.log($layout);
-
     // Save the updated layout to local storage
     saveToLocalStorage('grid-layout', $layout);
   };
+
+  function logItem(event: CustomEvent<LayoutChangeDetail>){
+    console.log(event);
+    if($deleteMode){removeWidget(event.detail.item.id);}
+  }
 
   let editMode = writable(false);
 
@@ -73,8 +92,34 @@
     await tick(); // Ensure DOM updates before continuing
   }
 
-  function logItem(event: CustomEvent<LayoutChangeDetail>){
-    console.log(event.detail.item);
+  function removeWidget(id) {
+    layout.update(currentLayout => {
+      const newLayout = currentLayout.filter(item => item.id !== id);
+      console.log("Updated Layout: ", newLayout); // Log updated layout
+      saveToLocalStorage('grid-layout', newLayout);
+      return newLayout;
+    });
+    saveKey++; // Increment saveKey to force re-render
+    deleteMode.set(false); // Turn off delete mode after deletion
+  }
+
+  function addWidget(widget) {
+    layout.update(currentLayout => [
+      ...currentLayout,
+      {
+        id: `${widget.id}-${Date.now()}`, // Ensure unique ID
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 3,
+        component: widget.component
+      }
+    ]);
+    saveKey++; // Increment saveKey to force re-render
+  }
+
+  function toggleDeleteMode() {
+    deleteMode.update((value) => !value);
   }
 
   const components = {
@@ -93,42 +138,90 @@
 
 <div class="h-screen w-screen flex">
   <!-- Sidebar -->
-  <div class="w-12 h-12 flex flex-col justify-center items-center bg-black rounded-xl m-2 border border-darkOrange cursor-pointer border-2 absolute z-20" on:click={toggleEditMode} >
+  <div class="w-12 h-12 flex flex-col justify-center items-center bg-black rounded-xl m-2 border border-darkOrange border-2 absolute z-20" on:click={toggleEditMode} >
     {#if $editMode}
-      <SaveIcon class="w-8 h-8 text-white " />
+      <SaveIcon class="w-8 h-8 text-orange-400 fill-white" />
     {:else}
-      <EditIcon class="w-8 h-8 text-white" />
+      <EditIcon class="w-8 h-8 text-orange-400 fill-white" />
     {/if}
   </div>
 
-  <!-- Grid Layout -->
-  <div class="flex-grow p-2">
-    <Grid cols={15} rows={12} on:change={onLayoutChange} {saveKey}>
-      {#each $layout as item (item.id)}
-        <GridItem
-          key={item.id + '-' + saveKey}
-          id={item.id}
-          x={item.x}
-          y={item.y}
-          w={item.w}
-          h={item.h}
-          class="grid-item"
-          movable={$editMode}
-          resizable={$editMode}
-          on:change={logItem}
-        >
-          <div class="bg-gray-900 border border-gray-700 flex items-center justify-center h-full w-full text-white">
-            <!-- Pass dimensions and other properties as props -->
-            <svelte:component this={components[item.component]} {...item.props} />
-          </div>
-        </GridItem>
+  <!-- Trash button -->
+  {#if $editMode}
+  <div class="w-12 h-12 flex flex-col justify-center items-center bg-red-600 rounded-xl m-2 border border-darkOrange border-2 absolute z-20 top-16 right-2 cursor-pointer  {$deleteMode ? "animate-shake" : ""} " on:click={toggleDeleteMode}>
+    <Trash2Icon class="w-8 h-8 text-white" />
+  </div>
+  {/if}
+
+  {#if $editMode}
+    <!-- Widgets that can be added -->
+    <div class="fixed top-28 left-2 bg-gray-800 p-2 rounded-lg z-30">
+      <div class="text-white mb-2">Available Widgets</div>
+      {#each $availableWidgets as widget}
+        <div class="p-2 bg-gray-700 rounded mb-2 text-white cursor-pointer" on:click={() => addWidget(widget)}>
+          {widget.component}
+        </div>
       {/each}
-    </Grid>
+    </div>
+  {/if}
+
+  <!-- Grid Layout -->
+  <div class="flex-grow p-2 relative">
+    {#key saveKey}
+      <Grid cols={15} rows={12} on:change={onLayoutChange} {saveKey}>
+        {#each $layout as item (item.id)}
+          <GridItem
+            key={item.id + '-' + saveKey}
+            id={item.id}
+            x={item.x}
+            y={item.y}
+            w={item.w}
+            h={item.h}
+            class="grid-item"
+            movable={$editMode}
+            resizable={$editMode}
+            on:change={logItem}
+            on:click={deleteMode ? () => removeWidget(item.id) : undefined}
+          >
+            <div class="relative bg-gray-900 border border-gray-700 flex items-center justify-center h-full w-full text-white">
+              <!-- Pass dimensions and other properties as props -->
+              <svelte:component this={components[item.component]} {...item.props} />
+            </div>
+          </GridItem>
+        {/each}
+      </Grid>
+    {/key}
   </div>
 </div>
 
 <style>
   :global(.grid-item) {
     position: absolute;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  .animate-shake {
+    animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both infinite;
+  }
+
+  @keyframes shake {
+    10%, 90% {
+      transform: translate3d(-1px, 0, 0);
+    }
+
+    20%, 80% {
+      transform: translate3d(2px, 0, 0);
+    }
+
+    30%, 50%, 70% {
+      transform: translate3d(-4px, 0, 0);
+    }
+
+    40%, 60% {
+      transform: translate3d(4px, 0, 0);
+    }
   }
 </style>

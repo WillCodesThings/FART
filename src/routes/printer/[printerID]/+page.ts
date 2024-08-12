@@ -17,7 +17,7 @@ export async function load({ fetch, params: { printerID } }) {
 
     // res = res.json();
 
-    res = { hi: "there" };
+    let res = { hi: "there" };
 
     console.log(res);
 
