@@ -6,14 +6,16 @@
     // Register all necessary components for Chart.js
     Chart.register(...registerables);
   
-    export let props = { humidity: 37.8, previousHumidity: 41.3, humidityHistory: [41.3, 39.5, 38.7, 37.8] };
+    export let props = { printSpeed: 37.8, previousprintSpeed: 41.3, printSpeedHistory: [41.3, 39.5, 38.7, 37.8] };
   
+    console.log(props);
+
     const data = {
-      labels: Array.from({ length: props.humidityHistory.length }, (_, i) => `Point ${i + 1}`),
+      labels: Array.from({ length: props.printSpeedHistory.length }, (_, i) => `Point ${i + 1}`),
       datasets: [
         {
-          label: 'Humidity',
-          data: props.humidityHistory,
+          label: 'printSpeed',
+          data: props.printSpeedHistory,
           borderColor: '#f97316', // Orange color for the line
           backgroundColor: 'rgba(249, 115, 22, 0.1)', // Orange gradient for the fill
           fill: true,
@@ -33,8 +35,8 @@
         },
         y: {
           display: false, // Hide Y axis
-          min: Math.min(...props.humidityHistory) - 2, // Add some padding below
-          max: Math.max(...props.humidityHistory) + 2, // Add some padding above
+          min: Math.min(...props.printSpeedHistory) - 2, // Add some padding below
+          max: Math.max(...props.printSpeedHistory) + 2, // Add some padding above
         }
       },
       plugins: {
@@ -49,16 +51,16 @@
   
   <div class="bg-black w-full h-full rounded-lg flex flex-col justify-center items-center ">
     <div class="text-white font-bold absolute top-2 left-2 flex flex-row w-[95%]">
-        Humidity
+        printSpeed
         <div class="ml-auto text-white"><DropletIcon class="fill-white" /></div>
     </div>
     <div class="text-3xl text-white font-bold">
-        {props.humidity} %
+        {props.printSpeed} %
     </div>
     <div class="absolute inset-0 w-full h-full">
         <Line {data} {options} />
         <div class="bg-black opacity-30 text-white text-xs p-2 absolute bottom-2 left-4 rounded-xl">
-            {props.previousHumidity}%
+            {props.previousprintSpeed}%
         </div>
     </div>
     

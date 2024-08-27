@@ -10,11 +10,15 @@ export const GET = async ({ params: { printerID }, fetch }) => {
     // Fetch job status
     const data = await printerInstance.getJobStatus(fetch);
 
+    console.log(data);
+
     // Fetch printer data
     const printerTelemetry = await printerInstance.getPrinterData(fetch);
 
     // Fetch available files
     const files = await printerInstance.getFiles(fetch);
+
+    console.log(files);
 
     // Return the gathered data as a JSON response
     return json({

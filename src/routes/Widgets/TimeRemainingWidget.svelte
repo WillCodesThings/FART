@@ -6,6 +6,9 @@
     Chart.register(...registerables);
 
     // Define props for the widget
+
+    export let props = {totalTime:120, timeElapsed:45};
+
     export let totalTime = 120; // Total time for the task in minutes
     export let timeElapsed = 45; // Time elapsed in minutes
 

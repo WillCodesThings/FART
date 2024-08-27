@@ -16,6 +16,8 @@
 
   export let printerData;
 
+  console.log(printerData);
+
   let readOnly = false;
   let saveKey = 0; // This will be used to force re-rendering
   let deleteMode = writable(false); // Track if delete mode is active
@@ -185,7 +187,7 @@
           >
             <div class="relative bg-gray-900 border border-gray-700 flex items-center justify-center h-full w-full text-white">
               <!-- Pass dimensions and other properties as props -->
-              <svelte:component this={components[item.component]} {...item.props} />
+              <svelte:component this={components[item.component]} props={printerData} />
             </div>
           </GridItem>
         {/each}

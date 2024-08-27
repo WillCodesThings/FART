@@ -7,18 +7,8 @@
 
     export let props = {
         progress: 20,
-        printer: {
-            select: false,
-            name: "Greg",
-            image: "https://i.ebayimg.com/images/g/j6sAAOSwm1FhdZKe/s-l1200.webp",
-            desc: "Dave works pretty well",
-            apiKey: "iiEjCdV9rkC3oUh",
-            id: 2,
-            ipAddr: "192.168.50.186",
-            model: "Prusa MK-4",
-            status: "Offline",
-            specs: {}
-        }
+        model: "Prusa MK-4",
+        status: "Offline",
     };
 
     const data = {
@@ -49,7 +39,7 @@
 
 <div class="bg-black text-white rounded-lg shadow-md flex flex-col justify-center items-center p-4 h-full w-full">
     <div class="text-sm text-gray-400 mb-4">
-        {props.printer.status} | {props.printer.model}
+        {props.status} | {props.model}
     </div>
     <div class="relative w-40 h-40 mb-4">
         <Doughnut {data} {options} />

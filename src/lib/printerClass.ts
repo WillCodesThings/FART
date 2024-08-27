@@ -1,10 +1,11 @@
-import { printers } from "./printers"; // Adjust the path as necessary
+import { printers } from "$lib"; // Adjust the path as necessary
 
 export class Printer {
   private printer: any; // Using 'any' type for a JSON object
 
   constructor(private printerID: number) {
     this.printer = this.getPrinter(printerID);
+    console.log(this.printer);
     if (!this.printer) {
       throw new Error(`Printer with ID ${printerID} not found`);
     }
@@ -36,16 +37,65 @@ export class Printer {
     return response.json();
   }
 
-  // Fetch available files on the printer
+  // Fetch available files on the printer and convert thumbnails to base64
   async getFiles(fetch: typeof globalThis.fetch): Promise<any> {
-    const response = await fetch(`http://${this.printer.ipAddr}/api/files`, {
-      headers: { "X-Api-Key": this.printer.apiKey },
-    });
-    const data = await response.json();
-    return data.files[0].children.length === 0
-      ? ["No files found"]
-      : data.files[0].children;
-  }
+    try {
+        console.log("getFiles method called");
+
+        const response = await fetch(`http://${this.printer.ipAddr}/api/files`, {
+            headers: {
+                "X-Api-Key": this.printer.apiKey,
+                "Content-Type": "application/json"
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch files: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log("Parsed JSON data:", data);
+
+        if (!data.files || data.files.length === 0) {
+            return ["No files found"];
+        } else {
+            const files = data.files[0].children;
+
+            // Function to extract print time from filename
+            function extractPrintTimeFromFilename(filename) {
+                const parts: string[] = filename.split('_');
+
+                let timePart;
+                
+                // Find the part that contains the time, which usually looks like "4h53m"
+
+                console.log("PATS",parts);
+                if (parts.length > 1){
+                  timePart = parts.filter(part => part.includes('m'))[parts.filter(part => part.includes('m')).length - 1].split(".")[0];
+                } else {
+                  timePart = "undefined"
+                }
+                return timePart;
+            }
+
+            for (let file of files) {
+
+                            // Extract print time from the filename and add to refs
+                            const printTime = extractPrintTimeFromFilename(file.display);
+                            if (file.refs) {
+                                file.refs.printTime = printTime; // Add the extracted print time to refs
+                            }
+
+            }
+
+            console.log("Processed files with metadata and print time in refs:", files);
+            return files;
+        }
+    } catch (error) {
+        console.error("Error in getFiles:", error);
+        return [];
+    }
+}
 
   // Upload and start a print job
   async addPrint(
@@ -96,8 +146,7 @@ export class Printer {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Api-Key": this.printer.apiKey,
-        },
+          "X-Api-Key": this.printer.apiKey },
         body: JSON.stringify(requestBody),
       });
 

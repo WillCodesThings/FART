@@ -51,7 +51,7 @@ export let printers = [
     desc: "One of us is lying",
     apiKey: "8xjWDu9cUSVEXf7",
     id: 3,
-    ipAddr: "192.168.50.103",
+    ipAddr: "192.168.50.106",
     model:"Prusa MK-4",
     status: "Offline",
     specs: {}

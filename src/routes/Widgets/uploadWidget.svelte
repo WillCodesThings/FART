@@ -6,6 +6,12 @@
     let file;
     let fileInput;
 
+    let progress;
+
+    function sendFileFetch(file) {
+
+    }
+
     function sendFile() {
         if (fileInput.files.length > 0) {
             file = fileInput.files[0];

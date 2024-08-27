@@ -4,6 +4,8 @@
 
   export let props;
 
+  console.log(props);
+
   let humanInput: string = "";
   let messages: { sender: string, text: string, images?: string[], render?: boolean }[] = [];
   let formattedMessages: { role: string, content: string, images: string[], context?: string }[] = [{
