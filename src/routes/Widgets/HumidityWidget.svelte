@@ -55,12 +55,12 @@
         <div class="ml-auto text-white"><DropletIcon class="fill-white" /></div>
     </div>
     <div class="text-3xl text-white font-bold">
-        {props.printSpeed} %
+        {props.printSpeed} 
     </div>
     <div class="absolute inset-0 w-full h-full">
-        <Line {data} {options} />
+        <!-- <Line {data} {options} /> -->
         <div class="bg-black opacity-30 text-white text-xs p-2 absolute bottom-2 left-4 rounded-xl">
-            {props.previousprintSpeed}%
+            {props.previousprintSpeed}
         </div>
     </div>
     

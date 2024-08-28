@@ -21,6 +21,8 @@
   let currentPreviousTemperature = props.previousNozzleTemperature;
   let currentTemperatureHistory = props.nozzleTemperatureHistory;
 
+  $: console.log("bedTemp: ", currentTemperatureHistory);
+
   const data = {
       labels: Array.from({ length: currentTemperatureHistory.length }, (_, i) => `Point ${i + 1}`),
       datasets: [
@@ -71,8 +73,6 @@
       }
 
       data.datasets[0].data = currentTemperatureHistory;
-      options.scales.y.min = Math.min(...currentTemperatureHistory) - 2;
-      options.scales.y.max = Math.max(...currentTemperatureHistory) + 2;
   }
 
   $: updateTemperatureData(); // Update the chart data whenever selectedTemperature changes

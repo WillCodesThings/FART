@@ -9,8 +9,8 @@
 
     export let props = {totalTime:120, timeElapsed:45};
 
-    export let totalTime = 120; // Total time for the task in minutes
-    export let timeElapsed = 45; // Time elapsed in minutes
+    let totalTime = props.totalTime; // Total time for the task in minutes
+    let timeElapsed = props.timeElapsed; // Time elapsed in minutes
 
     const timeRemaining = totalTime - timeElapsed;
     const percentageCompleted = (timeElapsed / totalTime) * 100;
@@ -56,7 +56,7 @@
             <Pie {data} {options} />
             <div class="absolute inset-0 flex items-center justify-center">
                 <div class="text-center">
-                    <span class="text-2xl font-bold">{Math.floor(timeRemaining / 60)}h {timeRemaining % 60}m</span>
+                    <span class="text-2xl font-bold">{Math.floor(timeRemaining / 3600)}h {Math.round((timeRemaining % 3600) / 60)}m</span>
                     <p class="text-sm mt-1 text-gray-400">{percentageCompleted.toFixed(1)}% completed</p>
                 </div>
             </div>

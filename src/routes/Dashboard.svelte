@@ -1,14 +1,23 @@
-<script>
+<script lang="ts">
     import PrinterGrid from "./PrinterGrid.svelte";
     import { get } from "svelte/store";
   
     export let printer;
 
     function generateRandomTemperatureHistory(size, min = 180, max = 220) {
-    return Array.from({ length: size }, () => Math.floor(Math.random() * (max - min + 1)) + min);
+      return Array.from({ length: size }, () => Math.floor(Math.random() * (max - min + 1)) + min);
     }
+
+    let bedTemperatureHistory: Number[] = [];
+    let nozzleTemperatureHistory: Number[] = [];
   
     let printerData = null;
+
+    function updateTempHistory(arr, max, val) {
+      arr.push(val);
+      // console.log(arr);
+      return arr.length <= max ? arr : arr.splice(arr.length - max, max);
+    }
   
     function getPrinterData() {
       fetch("/api/" + printer.id.toString(), {
@@ -16,6 +25,10 @@
       }).then(async (data) => {
         let res = await data.json();
         console.log(res);
+
+        updateTempHistory(bedTemperatureHistory, 6, res.prinerTelem?.temperature?.bed?.actual);
+        updateTempHistory(nozzleTemperatureHistory, 6, res.prinerTelem?.temperature?.tool0?.actual);
+
         // Mapping provided data to the required JSON structure
         const formattedData = {
           filamentCost: "Unknown", // Assuming no filament cost in provided data
@@ -35,20 +48,22 @@
           image: printer.image || "", // Using image from printer
           ipAddr: printer.ipAddr || "Unknown", // Assuming ipAddr is part of printer object
           model: printer.model || "Unknown",
-          progress: res.job?.progress?.completion || 0,
+          progress: Math.round(res.data.progress?.completion * 100) || 0,
           bedTemperature: res.prinerTelem?.temperature?.bed?.actual || 0,
           previousBedTemperature: res.prinerTelem?.temperature?.bed?.target || 0,
-          bedTemperatureHistory: generateRandomTemperatureHistory(10,60,90), // No history provided
+          bedTemperatureHistory: generateRandomTemperatureHistory(12),
           nozzleTemperature: res.prinerTelem?.temperature?.tool0?.actual || 0,
           previousNozzleTemperature: res.prinerTelem?.temperature?.tool0?.target || 0,
-          nozzleTemperatureHistory: generateRandomTemperatureHistory(10,190,220), // No history provided
-          totalTime: res.job?.estimatedPrintTime || 0,
-          timeElapsed: res.job?.progress?.printTime || 0,
-          printSpeed: res.prinerTelem?.['print-speed'] || 0,
-          previousprintSpeed: res.prinerTelem?.['print-speed'] || 0,
+          nozzleTemperatureHistory: generateRandomTemperatureHistory(12),
+          totalTime: res.data.progress.printTimeLeft + res.data.progress.printTime || 0,
+          timeElapsed: res.data.progress.printTime || 0,
+          printSpeed: res.prinerTelem.telemetry['print-speed'] || 0,
+          previousprintSpeed: res.prinerTelem.telemetry['print-speed'] || 0,
           printSpeedHistory: [] // No history provided
         };
   
+        console.log(res.prinerTelem.telemetry['print-speed']);
+        
         printerData = formattedData;
         console.log(printerData);
       });

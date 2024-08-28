@@ -10,7 +10,7 @@
   let messages: { sender: string, text: string, images?: string[], render?: boolean }[] = [];
   let formattedMessages: { role: string, content: string, images: string[], context?: string }[] = [{
     role: "user", 
-    content: "You are an AI assistant specializing in providing support for 3D printers. You are knowledgeable about different types of 3D printers, troubleshooting common issues like print quality, filament jams, bed leveling, and extruder problems. You can guide users step-by-step through fixing these issues and suggest preventive maintenance. The printers that I use are Prusa MK4s and Prusa MK3s.",
+    content: "",
     images: []
   }];
   let aiTyping: boolean = false;
@@ -20,18 +20,23 @@
 
   async function sendToAI() {
     let bodyContent = JSON.stringify({
-      model: "llava",
-      messages: formattedMessages
-    });
+            model: "llava",
+            messages: formattedMessages,
+            stream: true,
+            options: {
+                'session_id': props.name + props.status,
+                'personality': 'fart'
+            }
+      });
 
     controller = new AbortController();
     const signal = controller.signal;
 
     try {
-      const response = await fetch('http://localhost:11434/api/chat', {
+      const response = await fetch('http://192.168.50.97:8080/chat', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: bodyContent,
         signal
