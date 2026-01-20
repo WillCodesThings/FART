@@ -1,0 +1,1 @@
+import{aa as r,ab as i,M as n}from"./B8XpsIbj.js";import{u as s}from"./BKJNAsGT.js";const h=r(async a=>{let t,e;if(a.path==="/login")return;const{checkAuth:u,authenticated:o}=s();if([t,e]=i(()=>u()),await t,e(),!o.value)return n("/login")});export{h as default};

@@ -1,0 +1,29 @@
+# Docker Compose for Dokploy deployment
+# Dokploy will handle networking and traefik labels automatically
+
+services:
+  fart-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fart-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3000
+      - DATA_DIR=/app/data
+    volumes:
+      - fart-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  fart-data:
+    driver: local

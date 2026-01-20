@@ -1,0 +1,15 @@
+{
+  "users": [],
+  "printLogs": [],
+  "sessions": [
+    {
+      "id": "8197sgno3l8mkm89vbq",
+      "pin": "admin",
+      "userName": "stembassadors",
+      "isAdmin": true,
+      "createdAt": "2026-01-20T06:43:30.134Z",
+      "lastActive": "2026-01-20T06:43:35.054Z"
+    }
+  ],
+  "adminCode": "1264"
+}
