@@ -1,19 +1,19 @@
 /** @type {import('tailwindcss').Config} */
-
-import defaultTheme from "tailwindcss/defaultTheme";
 export default {
-  content: ["./src/**/*.{html,js,svelte,ts}"],
+  content: [
+    './components/**/*.{js,vue,ts}',
+    './layouts/**/*.vue',
+    './pages/**/*.vue',
+    './plugins/**/*.{js,ts}',
+    './app.vue',
+    './error.vue',
+  ],
   theme: {
     extend: {
       fontFamily: {
-        inter: ["Inter", ...defaultTheme.fontFamily.sans],
-      },
-      colors: {
-        darkGray: "#1C1C1C",
-        lightOrange: "#FFA348",
-        darkOrange: "#E65100",
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
     },
   },
-  plugins: [require("tailwind-scrollbar")],
-};
+  plugins: [],
+}
