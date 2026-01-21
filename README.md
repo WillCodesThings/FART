@@ -2,7 +2,7 @@
 
 A Vue 3 + Nuxt 3 dashboard for managing and monitoring Prusa 3D printers.
 
-## Features
+## Features!
 
 - **Multi-printer management** - Monitor and control multiple Prusa printers from one dashboard
 - **Real-time status** - Live temperature, progress, and status updates
