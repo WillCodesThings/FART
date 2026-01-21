@@ -73,10 +73,10 @@ export function usePrinterData(printerId: number, options: UsePrinterDataOptions
   const bedTemp = computed(() => telemetry.value?.temperature?.bed?.actual ?? 0)
   const bedTarget = computed(() => telemetry.value?.temperature?.bed?.target ?? 0)
 
-  // Progress shortcuts
+  // Progress shortcuts (completion is already 0-100 from normalized API)
   const progress = computed(() => {
     const completion = jobData.value?.progress?.completion ?? 0
-    return Math.round(completion * 100)
+    return Math.round(completion)
   })
   const printTimeElapsed = computed(() => jobData.value?.progress?.printTime ?? 0)
   const printTimeRemaining = computed(() => jobData.value?.progress?.printTimeLeft ?? 0)

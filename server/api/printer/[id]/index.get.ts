@@ -37,9 +37,10 @@ export default defineEventHandler(async (event): Promise<PrinterApiResponse> => 
     const currentPrint = activePrints.find(p => p.printerId === id)
 
     if (currentPrint && data) {
-      const progress = data.progress || 0
-      const isPrinting = data.state === 'Printing'
-      const isFinished = data.state === 'Finished' || progress >= 100
+      const progress = data.progress?.completion || 0
+      const state = data.state?.toUpperCase() || ''
+      const isPrinting = state === 'PRINTING' || data.state === 'Printing'
+      const isFinished = state === 'FINISHED' || data.state === 'Finished' || progress >= 100
 
       if (isFinished) {
         // Mark print as completed

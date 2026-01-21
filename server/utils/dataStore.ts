@@ -12,15 +12,6 @@ const DEFAULT_ADMIN_CODE = '1264'
 // Default printers
 const DEFAULT_PRINTERS: StoredPrinter[] = [
   {
-    id: 0,
-    name: 'Mock Printer',
-    image: 'https://i.ebayimg.com/images/g/j6sAAOSwm1FhdZKe/s-l1200.webp',
-    description: 'Local mock printer for testing',
-    apiKey: 'test-api-key',
-    ipAddr: 'mock-printer:8888',
-    model: 'Mock Prusa MK-4',
-  },
-  {
     id: 1,
     name: 'Dave',
     image: 'https://i.ebayimg.com/images/g/j6sAAOSwm1FhdZKe/s-l1200.webp',

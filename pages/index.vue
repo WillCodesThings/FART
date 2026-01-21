@@ -208,7 +208,7 @@ const fetchPrinterStatus = async (printerId: number) => {
     }
 
     const dataResponse = await $fetch<{
-      data: { job?: { file?: { name?: string } }; progress?: { completion?: number; printTimeLeft?: number }; state?: string }
+      data: { file?: { name?: string; display?: string }; progress?: { completion?: number; printTimeLeft?: number }; state?: string }
       printerTelemetry: { temperature?: { tool0?: { actual?: number }; bed?: { actual?: number } }; state?: { flags?: { printing?: boolean; paused?: boolean } } }
     }>(`/api/printer/${printerId}`)
 
@@ -216,22 +216,27 @@ const fetchPrinterStatus = async (printerId: number) => {
     const state = dataResponse.printerTelemetry?.state
     const job = dataResponse.data
 
+    // Determine printing/paused state from telemetry flags or job state
+    const jobState = job?.state?.toUpperCase() || ''
+    const isPrinting = state?.flags?.printing ?? (jobState === 'PRINTING' || job?.state === 'Printing')
+    const isPaused = state?.flags?.paused ?? (jobState === 'PAUSED' || job?.state === 'Paused')
+
     printerStatus.value[printerId] = {
       loading: false,
       online: true,
       data: {
         nozzleTemp: temp?.tool0?.actual ?? 0,
         bedTemp: temp?.bed?.actual ?? 0,
-        printing: state?.flags?.printing ?? false,
-        paused: state?.flags?.paused ?? false,
-        progress: job?.progress?.completion ?? 0,
-        currentFile: job?.job?.file?.name,
+        printing: isPrinting,
+        paused: isPaused,
+        progress: job?.progress?.completion ?? 0,  // Already 0-100 from normalized API
+        currentFile: job?.file?.display || job?.file?.name,  // Fixed: was job?.job?.file?.name
         timeRemaining: job?.progress?.printTimeLeft,
       },
     }
 
-    const status = state?.flags?.printing
-      ? state?.flags?.paused ? 'Paused' : 'Printing'
+    const status = isPrinting
+      ? isPaused ? 'Paused' : 'Printing'
       : 'Online'
     printerStore.updateStatus(printerId, status)
   } catch (error) {

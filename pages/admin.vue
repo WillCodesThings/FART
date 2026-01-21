@@ -26,6 +26,7 @@ import {
   WifiOff,
   Download,
   Calendar,
+  HardDrive,
 } from 'lucide-vue-next'
 
 interface MaintenanceLog {
@@ -350,7 +351,7 @@ const troubleshootingTips = [
   { issue: 'Printer offline', solution: 'Check network connection and power. Try restarting the printer.' },
   { issue: 'Print failed', solution: 'Check bed adhesion, filament, and nozzle temperature settings.' },
   { issue: 'Connection timeout', solution: 'Verify printer IP address and API key are correct.' },
-  { issue: 'Upload failed', solution: 'Ensure file is valid .gcode and printer has storage space.' },
+  { issue: 'Upload failed', solution: 'Ensure file is valid .gcode/.bgcode and matches printer type (MK4 needs .bgcode).' },
 ]
 
 // Cost configuration
@@ -535,6 +536,14 @@ const formatMaintenanceType = (type: string): string => {
             <h1 class="text-xl font-semibold text-white">Admin Dashboard</h1>
             <p class="text-xs text-zinc-500">Manage users and monitor prints</p>
           </div>
+          <NuxtLink
+            to="/admin/storage"
+            class="btn btn-secondary flex items-center gap-2"
+            title="Manage printer storage"
+          >
+            <HardDrive class="w-4 h-4" />
+            <span class="hidden sm:inline">Storage</span>
+          </NuxtLink>
           <button
             class="btn btn-secondary flex items-center gap-2"
             :disabled="exportingCsv"

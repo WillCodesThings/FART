@@ -99,8 +99,9 @@ const handleDrop = async (event: DragEvent) => {
 }
 
 const uploadFile = async (file: File) => {
-  if (!file.name.endsWith('.gcode')) {
-    uploadError.value = 'Please select a .gcode file'
+  const fileName = file.name.toLowerCase()
+  if (!fileName.endsWith('.gcode') && !fileName.endsWith('.bgcode') && !fileName.endsWith('.gco') && !fileName.endsWith('.bgc')) {
+    uploadError.value = 'Please select a .gcode or .bgcode file'
     return
   }
 
@@ -423,12 +424,12 @@ const goBack = () => router.push('/')
                     @drop.prevent="handleDrop"
                   >
                     <Upload :class="['w-8 h-8 mb-2', dragOver ? 'text-orange-400' : 'text-zinc-500']" />
-                    <span class="text-white font-medium text-sm">Drop .gcode file here</span>
+                    <span class="text-white font-medium text-sm">Drop .gcode or .bgcode file here</span>
                     <span class="text-xs text-zinc-500 mt-1">or click to browse</span>
                     <input
                       ref="fileInput"
                       type="file"
-                      accept=".gcode"
+                      accept=".gcode,.bgcode,.gco,.bgc"
                       class="hidden"
                       @change="handleFileSelect"
                     />
@@ -461,7 +462,7 @@ const goBack = () => router.push('/')
               <div v-else-if="files.length === 0" class="text-center py-16">
                 <FileText class="w-12 h-12 text-zinc-700 mx-auto mb-3" />
                 <p class="text-zinc-500 mb-1">No files on printer</p>
-                <p class="text-xs text-zinc-600">Upload a .gcode file to get started</p>
+                <p class="text-xs text-zinc-600">Upload a .gcode or .bgcode file to get started</p>
               </div>
 
               <div v-else class="divide-y divide-zinc-800 max-h-[600px] overflow-y-auto">

@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
 
     setCookie(event, 'fart-session', session.id, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Allow HTTP for local network access
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
 
   setCookie(event, 'fart-session', session.id, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // Allow HTTP for local network access
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7, // 7 days
     path: '/',
