@@ -5,7 +5,7 @@ export default defineNuxtConfig({
 
   nitro: {
     host: '0.0.0.0',
-    port: 3000,
+    // Port is set via NITRO_PORT or PORT env var at runtime
   },
 
   modules: [

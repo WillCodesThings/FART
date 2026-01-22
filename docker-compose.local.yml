@@ -13,6 +13,7 @@ services:
       - NODE_ENV=production
       - HOST=0.0.0.0
       - PORT=3005
+      - NITRO_PORT=3005
       - DATA_DIR=/app/data
     volumes:
       - fart-data:/app/data

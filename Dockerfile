@@ -33,13 +33,12 @@ RUN chown -R nuxtjs:nodejs /app
 
 USER nuxtjs
 
-# Expose port
+# Expose port (can be overridden at runtime via PORT env var)
 EXPOSE 3000
 
-# Set environment variables
+# Set environment variables (PORT can be overridden at runtime)
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
-ENV PORT=3000
 
 # Start the application
 CMD ["node", ".output/server/index.mjs"]
