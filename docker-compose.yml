@@ -1,40 +1,24 @@
-# Docker Compose for Dokploy deployment
-# Uses macvlan to give container its own IP on the local network
+# Docker Compose for deployment
+# Configure domain and port in dokploy for Traefik routing
 
 services:
   fart-dashboard:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: fart-dashboard
     restart: unless-stopped
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0
-      - PORT=3005
-      - NITRO_PORT=3005
       - DATA_DIR=/app/data
     volumes:
       - fart-data:/app/data
-    networks:
-      lan:
-        ipv4_address: 192.168.50.71
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3005"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-networks:
-  lan:
-    driver: macvlan
-    driver_opts:
-      parent: en0
-    ipam:
-      config:
-        - subnet: 192.168.50.0/24
-          gateway: 192.168.50.1
 
 volumes:
   fart-data:
