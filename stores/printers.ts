@@ -36,8 +36,8 @@ export const usePrinterStore = defineStore('printers', {
       this.error = null
 
       try {
-        const response = await $fetch<{ printers: Printer[] }>('/api/printer')
-        this.printers = response.printers.map(p => ({
+        const printers = await $fetch<Printer[]>('/api/printer')
+        this.printers = printers.map(p => ({
           ...p,
           status: 'Offline' as PrinterStatus,
           specs: {},
