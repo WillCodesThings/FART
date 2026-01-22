@@ -8,19 +8,18 @@ services:
       dockerfile: Dockerfile
     container_name: fart-dashboard
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    network_mode: host
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0
-      - PORT=3000
+      - PORT=3005
       - DATA_DIR=/app/data
     volumes:
       - fart-data:/app/data
     depends_on:
       - mock-printer
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3005"]
       interval: 30s
       timeout: 10s
       retries: 3
