@@ -20,26 +20,12 @@ services:
       # for Docker on Mac to reach local network devices
     volumes:
       - fart-data:/app/data
-    depends_on:
-      - mock-printer
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3005"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  mock-printer:
-    build:
-      context: ./mock-printer
-      dockerfile: Dockerfile
-    container_name: mock-printer
-    restart: unless-stopped
-    ports:
-      - "8888:8888"
-    environment:
-      - PORT=8888
-      - API_KEY=test-api-key
 
 volumes:
   fart-data:

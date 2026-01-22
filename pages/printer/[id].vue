@@ -33,9 +33,9 @@ const canControl = computed(() => {
   return isAdmin.value
 })
 
-onMounted(() => {
+onMounted(async () => {
   if (printerStore.printers.length === 0) {
-    printerStore.loadPrinters()
+    await printerStore.loadPrinters()
   }
 })
 

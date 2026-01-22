@@ -46,7 +46,7 @@ onMounted(async () => {
     router.push('/login')
     return
   }
-  printerStore.loadPrinters()
+  await printerStore.loadPrinters()
   refreshAllStatus()
   requestNotificationPermission()
   startNotificationPolling()

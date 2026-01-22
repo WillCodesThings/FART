@@ -9,45 +9,7 @@ const DATA_FILE = join(DATA_DIR, 'fart-data.json')
 const ADMIN_NAME = 'stembassadors'
 const DEFAULT_ADMIN_CODE = '1264'
 
-// Default printers
-const DEFAULT_PRINTERS: StoredPrinter[] = [
-  {
-    id: 1,
-    name: 'Dave',
-    image: 'https://i.ebayimg.com/images/g/j6sAAOSwm1FhdZKe/s-l1200.webp',
-    description: "Dave doesn't work",
-    apiKey: 'eVc9qg9Pd8L5Biy',
-    ipAddr: '192.168.50.234',
-    model: 'Prusa MK-4',
-  },
-  {
-    id: 2,
-    name: 'Greg',
-    image: 'https://i.ebayimg.com/images/g/j6sAAOSwm1FhdZKe/s-l1200.webp',
-    description: 'Greg works pretty well',
-    apiKey: 'iiEjCdV9rkC3oUh',
-    ipAddr: '192.168.50.186',
-    model: 'Prusa MK-4',
-  },
-  {
-    id: 4,
-    name: 'Mark',
-    image: 'https://i.ebayimg.com/images/g/j6sAAOSwm1FhdZKe/s-l1200.webp',
-    description: 'One of us is telling the truth',
-    apiKey: 'UZtsmAmQjU4EuwJ',
-    ipAddr: '192.168.50.206',
-    model: 'Prusa MK-4',
-  },
-  {
-    id: 3,
-    name: 'Larry',
-    image: 'https://i.ebayimg.com/images/g/j6sAAOSwm1FhdZKe/s-l1200.webp',
-    description: 'One of us is lying',
-    apiKey: '8xjWDu9cUSVEXf7',
-    ipAddr: '192.168.50.106',
-    model: 'Prusa MK-4',
-  },
-]
+// No default printers - printers are managed by admins and persisted to file
 
 const DEFAULT_COST_CONFIG: CostConfig = {
   filamentPerKg: 25,
@@ -66,7 +28,7 @@ function getDefaultData(): AppData {
     printLogs: [],
     sessions: [],
     adminCode: DEFAULT_ADMIN_CODE,
-    printers: DEFAULT_PRINTERS,
+    printers: [],
     costConfig: DEFAULT_COST_CONFIG,
     maintenanceLogs: [],
   }
@@ -297,7 +259,7 @@ function generateId(): string {
 // Printer functions
 export function getPrinters(): StoredPrinter[] {
   const data = loadData()
-  return data.printers || DEFAULT_PRINTERS
+  return data.printers || []
 }
 
 export function getPrinterById(id: number): StoredPrinter | undefined {
@@ -306,7 +268,7 @@ export function getPrinterById(id: number): StoredPrinter | undefined {
 
 export function addPrinter(printer: Omit<StoredPrinter, 'id'>): StoredPrinter {
   const data = loadData()
-  if (!data.printers) data.printers = [...DEFAULT_PRINTERS]
+  if (!data.printers) data.printers = []
 
   const newPrinter: StoredPrinter = {
     ...printer,
@@ -319,7 +281,7 @@ export function addPrinter(printer: Omit<StoredPrinter, 'id'>): StoredPrinter {
 
 export function updatePrinter(id: number, updates: Partial<StoredPrinter>): StoredPrinter | null {
   const data = loadData()
-  if (!data.printers) data.printers = [...DEFAULT_PRINTERS]
+  if (!data.printers) data.printers = []
 
   const index = data.printers.findIndex(p => p.id === id)
   if (index === -1) return null
