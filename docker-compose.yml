@@ -16,6 +16,8 @@ services:
       - PORT=3005
       - NITRO_PORT=3005
       - DATA_DIR=/app/data
+      # PRINTER_PROXY_URL is injected automatically by dokploy-clone
+      # for Docker on Mac to reach local network devices
     volumes:
       - fart-data:/app/data
     healthcheck:

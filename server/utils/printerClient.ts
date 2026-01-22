@@ -65,6 +65,10 @@ export interface PrinterCapabilities {
   apiVersion?: string
 }
 
+// Get proxy URL from environment (for Docker on Mac)
+// When set, requests go through the proxy to reach local network printers
+const PRINTER_PROXY_URL = process.env.PRINTER_PROXY_URL || ''
+
 export class PrinterClient {
   private printer: Printer
 
@@ -73,6 +77,12 @@ export class PrinterClient {
   }
 
   private get baseUrl(): string {
+    // If proxy is configured, route through it
+    // Proxy format: http://host.docker.internal:9999/proxy/{printer-ip}
+    if (PRINTER_PROXY_URL) {
+      const proxyBase = PRINTER_PROXY_URL.replace(/\/$/, '') // Remove trailing slash
+      return `${proxyBase}/proxy/${this.printer.ipAddr}`
+    }
     return `http://${this.printer.ipAddr}`
   }
 
