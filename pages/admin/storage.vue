@@ -49,8 +49,8 @@ const error = ref<string | null>(null)
 // Fetch printers list
 async function fetchPrinters() {
   try {
-    const response = await $fetch<{ printers: Printer[] }>('/api/printer')
-    printers.value = response.printers
+    const response = await $fetch<Printer[]>('/api/printer')
+    printers.value = response
     if (printers.value.length > 0 && !selectedPrinterId.value) {
       selectedPrinterId.value = printers.value[0].id
     }
@@ -173,12 +173,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-darkGray p-6">
+  <div class="min-h-screen bg-zinc-950 p-6">
     <div class="max-w-6xl mx-auto">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
-          <NuxtLink to="/admin" class="text-gray-400 hover:text-white">
+          <NuxtLink to="/admin" class="text-zinc-400 hover:text-white">
             &larr; Back to Admin
           </NuxtLink>
           <h1 class="text-2xl font-bold text-white flex items-center gap-2">
@@ -189,12 +189,12 @@ onMounted(() => {
       </div>
 
       <!-- Printer Selector -->
-      <div class="bg-gray-800 rounded-lg p-4 mb-6">
+      <div class="bg-zinc-900 rounded-lg p-4 mb-6">
         <div class="flex items-center gap-4">
-          <label class="text-gray-300">Select Printer:</label>
+          <label class="text-zinc-300">Select Printer:</label>
           <select
             v-model="selectedPrinterId"
-            class="bg-gray-700 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-lightOrange"
+            class="bg-zinc-800 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option v-for="printer in printers" :key="printer.id" :value="printer.id">
               {{ printer.name }} ({{ printer.model }})
@@ -203,7 +203,7 @@ onMounted(() => {
           <button
             @click="fetchStorage"
             :disabled="loading"
-            class="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors disabled:opacity-50"
+            class="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded transition-colors disabled:opacity-50"
           >
             <RefreshCw :class="['w-4 h-4', { 'animate-spin': loading }]" />
             Refresh
@@ -221,43 +221,43 @@ onMounted(() => {
 
       <!-- Loading State -->
       <div v-else-if="loading" class="text-center py-12">
-        <RefreshCw class="w-8 h-8 animate-spin text-lightOrange mx-auto mb-4" />
-        <p class="text-gray-400">Loading storage information...</p>
+        <RefreshCw class="w-8 h-8 animate-spin text-orange-500 mx-auto mb-4" />
+        <p class="text-zinc-400">Loading storage information...</p>
       </div>
 
       <!-- Storage Info -->
       <div v-else-if="storageData" class="space-y-6">
         <!-- Storage Stats -->
-        <div class="bg-gray-800 rounded-lg p-4">
+        <div class="bg-zinc-900 rounded-lg p-4">
           <h2 class="text-lg font-semibold text-white mb-4">Storage Overview</h2>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-gray-700 rounded p-3">
-              <p class="text-gray-400 text-sm">Total Files</p>
+            <div class="bg-zinc-800 rounded p-3">
+              <p class="text-zinc-400 text-sm">Total Files</p>
               <p class="text-2xl font-bold text-white">{{ storageData.totalFiles }}</p>
             </div>
-            <div class="bg-gray-700 rounded p-3">
-              <p class="text-gray-400 text-sm">Files Size</p>
+            <div class="bg-zinc-800 rounded p-3">
+              <p class="text-zinc-400 text-sm">Files Size</p>
               <p class="text-2xl font-bold text-white">{{ formatSize(storageData.totalFilesSize) }}</p>
             </div>
-            <div class="bg-gray-700 rounded p-3">
-              <p class="text-gray-400 text-sm">Free Space</p>
+            <div class="bg-zinc-800 rounded p-3">
+              <p class="text-zinc-400 text-sm">Free Space</p>
               <p class="text-2xl font-bold text-green-400">{{ formatSize(storageData.storage.free) }}</p>
             </div>
-            <div class="bg-gray-700 rounded p-3">
-              <p class="text-gray-400 text-sm">Total Space</p>
+            <div class="bg-zinc-800 rounded p-3">
+              <p class="text-zinc-400 text-sm">Total Space</p>
               <p class="text-2xl font-bold text-white">{{ formatSize(storageData.storage.total) }}</p>
             </div>
           </div>
 
           <!-- Storage Bar -->
           <div v-if="storageData.storage.total > 0" class="mt-4">
-            <div class="flex justify-between text-sm text-gray-400 mb-1">
+            <div class="flex justify-between text-sm text-zinc-400 mb-1">
               <span>Used: {{ formatSize(storageData.storage.used) }}</span>
               <span>{{ Math.round((storageData.storage.used / storageData.storage.total) * 100) }}%</span>
             </div>
-            <div class="h-3 bg-gray-700 rounded-full overflow-hidden">
+            <div class="h-3 bg-zinc-800 rounded-full overflow-hidden">
               <div
-                class="h-full bg-lightOrange transition-all duration-300"
+                class="h-full bg-orange-500 transition-all duration-300"
                 :style="{ width: `${(storageData.storage.used / storageData.storage.total) * 100}%` }"
               />
             </div>
@@ -267,17 +267,17 @@ onMounted(() => {
         <!-- File Actions -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
-            <label class="flex items-center gap-2 text-gray-300 cursor-pointer">
+            <label class="flex items-center gap-2 text-zinc-300 cursor-pointer">
               <input
                 type="checkbox"
                 :checked="selectedFiles.size === storageData.files.length && storageData.files.length > 0"
                 :indeterminate="selectedFiles.size > 0 && selectedFiles.size < storageData.files.length"
                 @change="toggleSelectAll"
-                class="w-4 h-4 rounded bg-gray-700 border-gray-600"
+                class="w-4 h-4 rounded bg-zinc-800 border-zinc-700"
               />
               Select All
             </label>
-            <span v-if="selectedFiles.size > 0" class="text-gray-400">
+            <span v-if="selectedFiles.size > 0" class="text-zinc-400">
               {{ selectedFiles.size }} selected
             </span>
           </div>
@@ -292,24 +292,24 @@ onMounted(() => {
         </div>
 
         <!-- Files List -->
-        <div class="bg-gray-800 rounded-lg overflow-hidden">
+        <div class="bg-zinc-900 rounded-lg overflow-hidden">
           <table class="w-full">
-            <thead class="bg-gray-700">
+            <thead class="bg-zinc-800">
               <tr>
                 <th class="w-10 px-4 py-3"></th>
-                <th class="px-4 py-3 text-left text-gray-300 font-medium">File Name</th>
-                <th class="px-4 py-3 text-left text-gray-300 font-medium">Size</th>
-                <th class="px-4 py-3 text-left text-gray-300 font-medium">Modified</th>
-                <th class="px-4 py-3 text-right text-gray-300 font-medium">Actions</th>
+                <th class="px-4 py-3 text-left text-zinc-300 font-medium">File Name</th>
+                <th class="px-4 py-3 text-left text-zinc-300 font-medium">Size</th>
+                <th class="px-4 py-3 text-left text-zinc-300 font-medium">Modified</th>
+                <th class="px-4 py-3 text-right text-zinc-300 font-medium">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-700">
+            <tbody class="divide-y divide-zinc-800">
               <tr
                 v-for="file in storageData.files"
                 :key="file.name"
                 :class="[
-                  'hover:bg-gray-700/50 transition-colors',
-                  { 'bg-gray-700/30': selectedFiles.has(file.name) }
+                  'hover:bg-zinc-800/50 transition-colors',
+                  { 'bg-zinc-800/30': selectedFiles.has(file.name) }
                 ]"
               >
                 <td class="px-4 py-3">
@@ -317,19 +317,19 @@ onMounted(() => {
                     type="checkbox"
                     :checked="selectedFiles.has(file.name)"
                     @change="toggleFileSelection(file.name)"
-                    class="w-4 h-4 rounded bg-gray-700 border-gray-600"
+                    class="w-4 h-4 rounded bg-zinc-800 border-zinc-700"
                   />
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
-                    <File class="w-4 h-4 text-gray-400" />
+                    <File class="w-4 h-4 text-zinc-400" />
                     <span class="text-white">{{ file.displayName }}</span>
                     <span v-if="file.readOnly" class="text-xs bg-yellow-600 text-yellow-100 px-1 rounded">Read Only</span>
                   </div>
-                  <p v-if="file.name !== file.displayName" class="text-xs text-gray-500 mt-1">{{ file.name }}</p>
+                  <p v-if="file.name !== file.displayName" class="text-xs text-zinc-500 mt-1">{{ file.name }}</p>
                 </td>
-                <td class="px-4 py-3 text-gray-300">{{ formatSize(file.size) }}</td>
-                <td class="px-4 py-3 text-gray-300">{{ formatDate(file.modified) }}</td>
+                <td class="px-4 py-3 text-zinc-300">{{ formatSize(file.size) }}</td>
+                <td class="px-4 py-3 text-zinc-300">{{ formatDate(file.modified) }}</td>
                 <td class="px-4 py-3 text-right">
                   <button
                     @click="deleteFile(file.name)"
@@ -343,7 +343,7 @@ onMounted(() => {
                 </td>
               </tr>
               <tr v-if="storageData.files.length === 0">
-                <td colspan="5" class="px-4 py-8 text-center text-gray-400">
+                <td colspan="5" class="px-4 py-8 text-center text-zinc-400">
                   No files found on this printer
                 </td>
               </tr>
@@ -353,7 +353,7 @@ onMounted(() => {
       </div>
 
       <!-- No Printer Selected -->
-      <div v-else class="text-center py-12 text-gray-400">
+      <div v-else class="text-center py-12 text-zinc-400">
         <HardDrive class="w-12 h-12 mx-auto mb-4 opacity-50" />
         <p>Select a printer to view storage</p>
       </div>
