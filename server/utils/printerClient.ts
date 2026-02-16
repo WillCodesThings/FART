@@ -311,6 +311,7 @@ export class PrinterClient {
         name: raw.job.file.name,
         display: raw.job.file.display || raw.job.file.name,
         path: raw.job.file.path,
+        thumbnailBig: raw.job.file.refs?.thumbnailBig || undefined,
       } : null,
       progress: {
         // Convert 0-1 decimal to 0-100 percentage
@@ -514,6 +515,28 @@ export class PrinterClient {
     }
 
     console.log(`[DEBUG] selectPrint: Print started successfully!`)
+  }
+
+  // Get thumbnail image for the current print job
+  async getThumbnail(thumbPath: string): Promise<Buffer> {
+    const response = await fetchWithTimeout(
+      `${this.baseUrl}${thumbPath}`,
+      {
+        method: 'GET',
+        headers: {
+          'X-Api-Key': this.printer.apiKey,
+          'Accept': 'image/*',
+        },
+      },
+      10000
+    )
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch thumbnail: ${response.status} ${response.statusText}`)
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    return Buffer.from(arrayBuffer)
   }
 
   // Get live image from the printer

@@ -36,11 +36,21 @@ const printerStatus = ref<Record<number, {
     progress: number
     currentFile?: string
     timeRemaining?: number
+    hasThumbnail: boolean
   }
 } | null>>({})
 
 const refreshing = ref(false)
 const lastUpdated = ref<Date | null>(null)
+const thumbnailVersion = ref(0)
+
+const getImageSrc = (printer: { id: number; image: string }) => {
+  const status = printerStatus.value[printer.id]
+  if (status?.data?.printing && status.data.hasThumbnail) {
+    return `/api/printer/${printer.id}/thumbnail?v=${thumbnailVersion.value}`
+  }
+  return printer.image
+}
 
 const sanitizeProgress = (value: number | undefined | null): number => {
   if (value === undefined || value === null || isNaN(value)) return 0
@@ -67,7 +77,7 @@ const fetchPrinterStatus = async (printerId: number) => {
     }
 
     const dataResponse = await $fetch<{
-      data: { file?: { name?: string; display?: string }; progress?: { completion?: number; printTimeLeft?: number }; state?: string }
+      data: { file?: { name?: string; display?: string; thumbnailBig?: string }; progress?: { completion?: number; printTimeLeft?: number }; state?: string }
       printerTelemetry: { temperature?: { tool0?: { actual?: number }; bed?: { actual?: number } }; state?: { flags?: { printing?: boolean; paused?: boolean } } }
     }>(`/api/printer/${printerId}`)
 
@@ -90,6 +100,7 @@ const fetchPrinterStatus = async (printerId: number) => {
         progress: job?.progress?.completion ?? 0,
         currentFile: job?.file?.display || job?.file?.name,
         timeRemaining: job?.progress?.printTimeLeft,
+        hasThumbnail: !!job?.file?.thumbnailBig,
       },
     }
 
@@ -110,6 +121,7 @@ const fetchPrinterStatus = async (printerId: number) => {
 const refreshAllStatus = async () => {
   refreshing.value = true
   await Promise.all(printers.value.map(p => fetchPrinterStatus(p.id)))
+  thumbnailVersion.value++
   lastUpdated.value = new Date()
   refreshing.value = false
 }
@@ -266,9 +278,34 @@ onUnmounted(() => {
             <span class="text-sm text-zinc-500">{{ printer.model }}</span>
           </div>
 
-          <!-- Camera Image -->
+          <!-- Printer Image / Print Thumbnail / Idle Graphic -->
           <div class="relative aspect-video bg-zinc-800 overflow-hidden">
+            <!-- Thumbnail when printing -->
             <img
+              v-if="printerStatus[printer.id]?.data?.printing && printerStatus[printer.id]?.data?.hasThumbnail"
+              :src="getImageSrc(printer)"
+              :alt="printer.name"
+              class="w-full h-full object-contain p-4 transition-all duration-500"
+            />
+
+            <!-- Idle/Ready animated graphic -->
+            <div
+              v-else-if="printerStatus[printer.id]?.online && !printerStatus[printer.id]?.data?.printing"
+              class="w-full h-full flex items-center justify-center"
+            >
+              <div class="relative flex items-center justify-center">
+                <!-- Pulsing rings -->
+                <div class="absolute w-28 h-28 rounded-full border border-blue-500/20 animate-[ping_3s_ease-in-out_infinite]" />
+                <div class="absolute w-20 h-20 rounded-full border border-blue-500/10 animate-[ping_3s_ease-in-out_1s_infinite]" />
+                <div class="absolute w-16 h-16 rounded-full bg-blue-500/5" />
+                <Printer class="w-8 h-8 text-blue-400/60" />
+              </div>
+              <span class="absolute bottom-4 text-xs text-zinc-600 uppercase tracking-widest">Ready</span>
+            </div>
+
+            <!-- Fallback static image -->
+            <img
+              v-else
               :src="printer.image"
               :alt="printer.name"
               class="w-full h-full object-cover"

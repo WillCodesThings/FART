@@ -44,6 +44,10 @@ export interface PrusaLinkJobResponse {
       name: string
       path?: string
       display?: string
+      refs?: {
+        resource?: string
+        thumbnailBig?: string
+      }
     }
   }
   progress?: {
