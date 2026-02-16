@@ -175,22 +175,20 @@ const showPrinterForm = ref(false)
 const editingPrinter = ref<number | null>(null)
 const printerForm = ref({
   name: '',
-  ipAddr: '',
   apiKey: '',
   model: 'Prusa MK-4',
 })
 const savingPrinter = ref(false)
 
 const resetPrinterForm = () => {
-  printerForm.value = { name: '', ipAddr: '', apiKey: '', model: 'Prusa MK-4' }
+  printerForm.value = { name: '', apiKey: '', model: 'Prusa MK-4' }
   editingPrinter.value = null
   showPrinterForm.value = false
 }
 
-const startEditPrinter = (printer: { id: number; name: string; ipAddr: string; apiKey: string; model: string }) => {
+const startEditPrinter = (printer: { id: number; name: string; apiKey: string; model: string }) => {
   printerForm.value = {
     name: printer.name,
-    ipAddr: printer.ipAddr,
     apiKey: printer.apiKey,
     model: printer.model,
   }
@@ -199,8 +197,8 @@ const startEditPrinter = (printer: { id: number; name: string; ipAddr: string; a
 }
 
 const savePrinter = async () => {
-  if (!printerForm.value.name || !printerForm.value.ipAddr || !printerForm.value.apiKey) {
-    error.value = 'Name, IP address, and API key are required'
+  if (!printerForm.value.name || !printerForm.value.apiKey) {
+    error.value = 'Name and API key are required'
     return
   }
 
@@ -940,7 +938,7 @@ const formatMaintenanceType = (type: string): string => {
             </div>
             <button
               class="btn btn-primary text-sm py-1 px-3 flex items-center gap-1"
-              @click="showPrinterForm = true; editingPrinter = null; printerForm = { name: '', ipAddr: '', apiKey: '', model: 'Prusa MK-4' }"
+              @click="showPrinterForm = true; editingPrinter = null; printerForm = { name: '', apiKey: '', model: 'Prusa MK-4' }"
             >
               <Plus class="w-4 h-4" />
               Add Printer
@@ -966,15 +964,6 @@ const formatMaintenanceType = (type: string): string => {
                   v-model="printerForm.model"
                   type="text"
                   placeholder="e.g. Prusa MK-4"
-                  class="input text-sm"
-                />
-              </div>
-              <div>
-                <label class="text-xs text-zinc-500 mb-1 block">IP Address</label>
-                <input
-                  v-model="printerForm.ipAddr"
-                  type="text"
-                  placeholder="e.g. 192.168.1.100"
                   class="input text-sm"
                 />
               </div>
@@ -1024,7 +1013,7 @@ const formatMaintenanceType = (type: string): string => {
                     <span class="text-white font-medium">{{ printer.name }}</span>
                     <span class="text-xs text-zinc-500">{{ printer.model }}</span>
                   </div>
-                  <p class="text-xs text-zinc-500 font-mono">{{ printer.ipAddr }}</p>
+                  <p class="text-xs text-zinc-500">Auto-discovered via network scan</p>
                 </div>
               </div>
               <div class="flex items-center gap-2">

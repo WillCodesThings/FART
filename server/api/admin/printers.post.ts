@@ -1,5 +1,6 @@
 import { getSession } from '~/server/utils/dataStore'
 import { addPrinter, updatePrinter, deletePrinter, getPrinterById } from '~/server/utils/printerStore'
+import { scanForPrinter } from '~/server/utils/networkScanner'
 import type { Printer } from '~/types/printer'
 
 interface PrinterAction {
@@ -24,16 +25,16 @@ export default defineEventHandler(async (event) => {
   const { action, id, printer } = body
 
   if (action === 'add') {
-    if (!printer?.name || !printer?.ipAddr || !printer?.apiKey) {
+    if (!printer?.name || !printer?.apiKey) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Name, IP address, and API key are required',
+        statusMessage: 'Name and API key are required',
       })
     }
 
     const newPrinter = addPrinter({
       name: printer.name,
-      ipAddr: printer.ipAddr,
+      ipAddr: printer.ipAddr || '0.0.0.0',
       apiKey: printer.apiKey,
       model: printer.model || 'Unknown',
       description: printer.description || '',
@@ -42,7 +43,10 @@ export default defineEventHandler(async (event) => {
       specs: {},
     })
 
-    return { success: true, message: 'Printer added', printer: newPrinter }
+    // Scan the network for this printer immediately
+    scanForPrinter(newPrinter.id, newPrinter.apiKey)
+
+    return { success: true, message: 'Printer added — scanning network for IP', printer: newPrinter }
   }
 
   if (action === 'edit') {
